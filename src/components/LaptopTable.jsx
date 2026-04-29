@@ -143,10 +143,18 @@ function LaptopDetailModal({ laptop, status, user, onClose }) {
             </div>
           </div>
 
-          {/* Last Seen */}
-          <div className="flex items-center gap-2 text-xs text-gray-400 pt-1">
-            <Clock size={12} />
-            <span>Terakhir online: {formatLastSeen(laptop.last_seen)}</span>
+          {/* Last Seen + Agent Version */}
+          <div className="flex items-center justify-between text-xs text-gray-400 pt-1">
+            <div className="flex items-center gap-2">
+              <Clock size={12} />
+              <span>Terakhir online: {formatLastSeen(laptop.last_seen)}</span>
+            </div>
+            {laptop.agent_version && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-mono"
+                style={{ backgroundColor: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0' }}>
+                agent v{laptop.agent_version}
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.2'
+const CURRENT_VERSION = '1.0.3'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -263,6 +263,7 @@ async function ping() {
       is_online: true,
       boot_time: bootTime,
       wifi_ssid: ssid,
+      agent_version: CURRENT_VERSION,
       ...cachedLocation,
       ...cachedSpecs,
     })
@@ -277,7 +278,7 @@ async function ping() {
     if (sn) {
       const { data: snData } = await supabase
         .from('laptops')
-        .update({ hostname, last_seen: now.toISOString(), is_online: true, boot_time: bootTime, wifi_ssid: ssid, ...cachedLocation, ...cachedSpecs })
+        .update({ hostname, last_seen: now.toISOString(), is_online: true, boot_time: bootTime, wifi_ssid: ssid, agent_version: CURRENT_VERSION, ...cachedLocation, ...cachedSpecs })
         .eq('serial_number', sn)
         .select()
       if (snData && snData.length > 0) {
@@ -296,6 +297,7 @@ async function ping() {
       boot_time: bootTime,
       wifi_ssid: ssid,
       status: 'available',
+      agent_version: CURRENT_VERSION,
       ...cachedLocation,
       ...cachedSpecs,
     }])
