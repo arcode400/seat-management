@@ -1,0 +1,53 @@
+================================================================
+  CARA INSTALL AGENT SEAT MANAGEMENT - Windows
+================================================================
+
+Step 1 — Cek Node.js sudah terinstall
+  Buka Command Prompt atau PowerShell, ketik:
+
+    node -v
+
+  - Kalau muncul versi (contoh: v20.0.0) → langsung ke Step 3
+  - Kalau muncul error → lanjut Step 2
+
+----------------------------------------------------------------
+
+Step 2 — Install Node.js
+  1. Buka browser, pergi ke: https://nodejs.org
+  2. Klik tombol "LTS" untuk download
+  3. Jalankan file installer yang terdownload
+  4. Klik Next terus sampai selesai (tidak perlu ubah apapun)
+  5. Restart Command Prompt / PowerShell
+  6. Verifikasi:
+
+       node -v
+
+     Harus muncul versi → lanjut Step 3.
+
+----------------------------------------------------------------
+
+Step 3 — Pindahkan folder agent ke komputer
+  Taruh folder "agent" di mana saja, misal di Desktop atau C:\
+
+----------------------------------------------------------------
+
+Step 4 — Jalankan setup sebagai Administrator
+  1. Buka folder "agent"
+  2. Klik kanan pada file "setup.bat"
+  3. Pilih "Run as administrator"
+  4. Klik "Yes" kalau muncul konfirmasi
+
+  Tunggu sampai muncul tulisan:
+  "Agent otomatis jalan setiap kali Windows start."
+
+================================================================
+  SELESAI! Agent sudah terpasang dan berjalan di background.
+================================================================
+
+Kalau mau uninstall:
+  1. Buka folder "agent"
+  2. Klik kanan pada file "uninstall.bat"
+  3. Pilih "Run as administrator"
+  4. Klik "Yes" kalau muncul konfirmasi
+
+================================================================

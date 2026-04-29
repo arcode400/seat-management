@@ -1,0 +1,102 @@
+================================================================
+  CARA INSTALL AGENT SEAT MANAGEMENT - MacBook
+================================================================
+
+Step 1 — Buka Terminal
+  Tekan Command + Space → ketik "Terminal" → Enter
+
+----------------------------------------------------------------
+
+Step 2 — Cek Node.js
+  Ketik di Terminal:
+
+    node -v
+
+  - Kalau muncul versi (contoh: v20.0.0) → langsung ke Step 7
+  - Kalau muncul error → lanjut Step 3
+
+----------------------------------------------------------------
+
+Step 3 — Install Homebrew
+  Ketik di Terminal (copy paste seluruh baris):
+
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  Nanti diminta password Mac → ketik password (tidak keliatan
+  saat diketik, itu normal) → Enter.
+  Tunggu sampai selesai sekitar 5-10 menit.
+
+----------------------------------------------------------------
+
+Step 4 — Cek jenis chip Mac
+  Ketik di Terminal:
+
+    uname -m
+
+----------------------------------------------------------------
+
+Step 5 — Tambah Homebrew ke PATH
+
+  Kalau hasil Step 4 adalah "arm64" (Mac M1/M2/M3):
+
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile && eval "$(/opt/homebrew/bin/brew shellenv)"
+
+  Kalau hasil Step 4 adalah "x86_64" (Mac Intel):
+
+    echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile && eval "$(/usr/local/bin/brew shellenv)"
+
+----------------------------------------------------------------
+
+Step 6 — Install Node.js
+  Ketik di Terminal:
+
+    brew install node
+
+  Tunggu sampai selesai, lalu verifikasi:
+
+    node -v
+
+  Harus muncul versi → lanjut Step 7.
+
+----------------------------------------------------------------
+
+Step 7 — Pindahkan folder agent-mac ke Mac
+  Taruh folder ini di Desktop atau Downloads.
+
+----------------------------------------------------------------
+
+Step 8 — Masuk ke folder agent-mac
+  Kalau taruh di Desktop:
+
+    cd ~/Desktop/agent-mac
+
+  Kalau taruh di Downloads:
+
+    cd ~/Downloads/agent-mac
+
+----------------------------------------------------------------
+
+Step 9 — Beri izin eksekusi
+  Ketik di Terminal:
+
+    chmod +x setup.sh uninstall.sh
+
+----------------------------------------------------------------
+
+Step 10 — Jalankan setup
+  Ketik di Terminal:
+
+    ./setup.sh
+
+  Tunggu sampai muncul tulisan:
+  "Agent akan otomatis berjalan setiap kali Mac menyala."
+
+================================================================
+  SELESAI! Agent sudah terpasang dan berjalan di background.
+================================================================
+
+Kalau mau uninstall:
+
+    cd ~/Desktop/agent-mac && ./uninstall.sh
+
+================================================================

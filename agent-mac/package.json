@@ -1,0 +1,13 @@
+{
+  "name": "seat-management-agent",
+  "version": "1.0.0",
+  "description": "Agent monitoring status laptop (macOS)",
+  "main": "monitor.js",
+  "scripts": {
+    "start": "node monitor.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
