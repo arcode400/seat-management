@@ -158,17 +158,10 @@ export default function LandingPage() {
           <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 16, fontWeight: 300 }}>×</span>
           <img src="/logo-injourney.png" alt="Injourney" style={logoStyle} />
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button onClick={() => navigate('/login')} style={{
-            background: 'rgba(255,255,255,0.1)', color: 'white',
-            border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8,
-            padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>Login</button>
-          <button onClick={() => navigate('/login')} style={{
-            background: 'white', color: '#0D47A1', border: 'none', borderRadius: 8,
-            padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}>Masuk →</button>
-        </div>
+        <button onClick={() => navigate('/login')} style={{
+          background: 'white', color: '#0D47A1', border: 'none', borderRadius: 8,
+          padding: '8px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        }}>Masuk →</button>
       </nav>
 
       {/* ══ HERO ══ */}
