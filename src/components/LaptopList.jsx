@@ -429,15 +429,27 @@ export default function LaptopList({ refreshTrigger, onEdit }) {
             <div className="flex items-center gap-1">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                 className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed bg-white cursor-pointer">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button key={p} onClick={() => setPage(p)}
-                  className="px-2.5 py-1.5 text-xs rounded-md border transition-colors cursor-pointer"
-                  style={page === p
-                    ? { backgroundColor: '#0D47A1', color: 'white', borderColor: '#0D47A1' }
-                    : { backgroundColor: 'white', color: '#4B5563', borderColor: '#E5E7EB' }}>
-                  {p}
-                </button>
-              ))}
+              {(() => {
+                const delta = 2
+                const pages = []
+                const left = Math.max(2, page - delta)
+                const right = Math.min(totalPages - 1, page + delta)
+                pages.push(1)
+                if (left > 2) pages.push('...')
+                for (let i = left; i <= right; i++) pages.push(i)
+                if (right < totalPages - 1) pages.push('...')
+                if (totalPages > 1) pages.push(totalPages)
+                return pages.map((p, i) => p === '...'
+                  ? <span key={`dot-${i}`} className="px-2 text-xs text-gray-400">…</span>
+                  : <button key={p} onClick={() => setPage(p)}
+                      className="px-2.5 py-1.5 text-xs rounded-md border transition-colors cursor-pointer"
+                      style={page === p
+                        ? { backgroundColor: '#0D47A1', color: 'white', borderColor: '#0D47A1' }
+                        : { backgroundColor: 'white', color: '#4B5563', borderColor: '#E5E7EB' }}>
+                      {p}
+                    </button>
+                )
+              })()}
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
                 className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed bg-white cursor-pointer">›</button>
             </div>
