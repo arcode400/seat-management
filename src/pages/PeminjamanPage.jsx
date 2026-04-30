@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown } from 'lucide-react'
+import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil } from 'lucide-react'
 import { printReport } from '../utils/printReport'
 import { getAllLaptops, updateLaptop } from '../services/laptopService'
-import { getAllBeritaAcara, deleteBeritaAcara } from '../services/beritaAcaraService'
-import { getAllBAP, deleteBAP } from '../services/beritaAcaraPengembalianService'
+import { getAllBeritaAcara, deleteBeritaAcara, updateBeritaAcara } from '../services/beritaAcaraService'
+import { getAllBAP, deleteBAP, updateBAP } from '../services/beritaAcaraPengembalianService'
 import { printBeritaAcara } from '../utils/printBeritaAcara'
 import { printBeritaAcaraPengembalian } from '../utils/printBeritaAcaraPengembalian'
 import PeminjamanModal from '../components/PeminjamanModal'
@@ -127,6 +127,163 @@ function KembalikanModal({ asset, bastList, bapList, onClose, onKembalikan, onKe
   )
 }
 
+function RiwayatEditModal({ item, onClose, onSaved }) {
+  const isBast = item._type === 'bast'
+  const [form, setForm] = useState({
+    nomor_ba:            item.nomor_ba || '',
+    tanggal:             item.tanggal || '',
+    nama_perangkat:      item.nama_perangkat || '',
+    serial_number:       item.serial_number || '',
+    // BAST
+    penerima_nama:       item.penerima_nama || '',
+    penerima_nip:        item.penerima_nip || '',
+    penerima_unit:       item.penerima_unit || '',
+    penerima_jabatan:    item.penerima_jabatan || '',
+    hostname:            item.hostname || '',
+    // BAP
+    pengembalian_nama:   item.pengembalian_nama || '',
+    pengembalian_jabatan: item.pengembalian_jabatan || '',
+    kondisi_unit:        item.kondisi_unit || 'Normal',
+  })
+  const [saving, setSaving] = useState(false)
+
+  function handleChange(e) {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  }
+
+  async function handleSave(e) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      if (isBast) {
+        const fields = {
+          nomor_ba: form.nomor_ba, tanggal: form.tanggal,
+          nama_perangkat: form.nama_perangkat, serial_number: form.serial_number,
+          hostname: form.hostname,
+          penerima_nama: form.penerima_nama, penerima_nip: form.penerima_nip,
+          penerima_unit: form.penerima_unit, penerima_jabatan: form.penerima_jabatan,
+        }
+        await updateBeritaAcara(item.id, fields)
+      } else {
+        const fields = {
+          nomor_ba: form.nomor_ba, tanggal: form.tanggal,
+          nama_perangkat: form.nama_perangkat, serial_number: form.serial_number,
+          pengembalian_nama: form.pengembalian_nama,
+          pengembalian_jabatan: form.pengembalian_jabatan,
+          kondisi_unit: form.kondisi_unit,
+        }
+        await updateBAP(item.id, fields)
+      }
+      onSaved()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const labelClass = 'block text-xs font-medium text-gray-500 mb-1'
+  const inputClass = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Edit {isBast ? 'BAST' : 'BA Pengembalian'}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{item.nomor_ba || '—'}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg border-0 bg-transparent cursor-pointer text-gray-400 hover:bg-gray-100">
+            <X size={18} />
+          </button>
+        </div>
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Nomor BA</label>
+              <input name="nomor_ba" value={form.nomor_ba} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Tanggal</label>
+              <input type="date" name="tanggal" value={form.tanggal} onChange={handleChange} className={inputClass} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Nama Perangkat</label>
+              <input name="nama_perangkat" value={form.nama_perangkat} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Serial Number</label>
+              <input name="serial_number" value={form.serial_number} onChange={handleChange} className={inputClass} />
+            </div>
+          </div>
+          {isBast ? (
+            <>
+              <div>
+                <label className={labelClass}>Hostname</label>
+                <input name="hostname" value={form.hostname} onChange={handleChange} className={inputClass} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Nama Penerima</label>
+                  <input name="penerima_nama" value={form.penerima_nama} onChange={handleChange} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>NIP</label>
+                  <input name="penerima_nip" value={form.penerima_nip} onChange={handleChange} className={inputClass} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Unit</label>
+                  <input name="penerima_unit" value={form.penerima_unit} onChange={handleChange} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Jabatan</label>
+                  <input name="penerima_jabatan" value={form.penerima_jabatan} onChange={handleChange} className={inputClass} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Nama yang Mengembalikan</label>
+                  <input name="pengembalian_nama" value={form.pengembalian_nama} onChange={handleChange} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Jabatan</label>
+                  <input name="pengembalian_jabatan" value={form.pengembalian_jabatan} onChange={handleChange} className={inputClass} />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Kondisi Unit</label>
+                <select name="kondisi_unit" value={form.kondisi_unit} onChange={handleChange} className={inputClass}>
+                  <option value="Normal">Normal</option>
+                  <option value="Rusak Ringan">Rusak Ringan</option>
+                  <option value="Rusak Berat">Rusak Berat</option>
+                </select>
+              </div>
+            </>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg bg-white cursor-pointer hover:bg-gray-50">
+              Batal
+            </button>
+            <button type="submit" disabled={saving}
+              className="px-4 py-2 text-sm font-semibold text-white rounded-lg border-0 cursor-pointer"
+              style={{ backgroundColor: saving ? '#93C5FD' : '#0D47A1' }}>
+              {saving ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function fmtDate(d) {
   if (!d) return '—'
   return new Date(d.includes('T') ? d : d + 'T00:00:00').toLocaleDateString('id-ID', {
@@ -152,6 +309,7 @@ export default function PeminjamanPage() {
   const [bapInitialSn, setBapInitialSn] = useState('')
   const [search, setSearch]             = useState('')
   const [refresh, setRefresh]           = useState(0)
+  const [editingRiwayat, setEditingRiwayat] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -611,6 +769,16 @@ export default function PeminjamanPage() {
                                   onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}>
                                   <Printer size={12} /> Print
                                 </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => setEditingRiwayat(r)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                                    style={{ backgroundColor: '#FFFBEB', color: '#D97706' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FEF3C7'}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FFFBEB'}>
+                                    <Pencil size={12} /> Edit
+                                  </button>
+                                )}
                                 {isSuperAdmin && (
                                   <button
                                     onClick={() => isBast ? handleDeleteBast(r.id, r.nomor_ba) : handleDeleteBap(r.id, r.nomor_ba)}
@@ -652,6 +820,15 @@ export default function PeminjamanPage() {
           asset={modalAsset}
           onClose={() => setModalAsset(null)}
           onSuccess={() => { setModalAsset(null); setRefresh(r => r + 1) }}
+        />
+      )}
+
+      {/* Modal: Edit Riwayat BA */}
+      {editingRiwayat && (
+        <RiwayatEditModal
+          item={editingRiwayat}
+          onClose={() => setEditingRiwayat(null)}
+          onSaved={() => { setEditingRiwayat(null); setRefresh(r => r + 1) }}
         />
       )}
 

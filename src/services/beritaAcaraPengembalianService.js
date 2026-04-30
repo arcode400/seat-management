@@ -21,6 +21,17 @@ export async function createBAP(payload) {
   return data
 }
 
+export async function updateBAP(id, fields) {
+  const { data, error } = await supabase
+    .from('berita_acara_pengembalian')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
 export async function deleteBAP(id) {
   const { error } = await supabase
     .from('berita_acara_pengembalian')

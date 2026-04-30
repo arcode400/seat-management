@@ -58,7 +58,7 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
       const payload = {
         ...form,
         laptop_id:     asset.id,
-        nomor_ba:      nomorSuffix.trim() ? `BA.ITO.${nomorSuffix.trim()}` : '',
+        nomor_ba:      nomorSuffix.trim() ? `BA.ITO.${nomorSuffix.trim()}` : null,
         serial_number: asset.serial_number || '',
         hostname:      asset.hostname || '',
         kode_aset:     asset.asset_code || '',
