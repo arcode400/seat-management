@@ -242,7 +242,7 @@ export default function LaptopTable() {
     )
   }
 
-  const COLUMNS = ['Hostname', 'Serial Number', 'Tipe', 'User', 'Status', 'Last Seen', 'IP Address', 'Location', 'WiFi SSID', 'Lokasi Kantor']
+  const COLUMNS = ['No', 'Hostname', 'Serial Number', 'Tipe', 'User', 'Status', 'Last Seen', 'IP Address', 'Location', 'WiFi SSID', 'Lokasi Kantor']
 
   return (
     <>
@@ -305,19 +305,20 @@ export default function LaptopTable() {
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-12 text-center text-gray-400 text-sm">
+                <td colSpan={11} className="px-4 py-12 text-center text-gray-400 text-sm">
                   {search || statusFilter !== 'Semua' || locationFilter !== 'Semua' || wifiFilter !== 'Semua'
                     ? 'Tidak ada data yang cocok dengan filter.'
                     : 'Belum ada laptop terdaftar.'}
                 </td>
               </tr>
             ) : (
-              paginated.map(laptop => {
+              paginated.map((laptop, idx) => {
                 const user = laptop.user_name
                 const status = getLaptopStatus(laptop, now)
                 return (
                   <tr key={laptop.id} onClick={() => setSelectedLaptop({ laptop, user, status })}
                     className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors cursor-pointer">
+                    <td className="px-4 py-3 text-xs text-gray-400 text-center w-8">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td className="px-4 py-3 font-semibold text-gray-800">{laptop.hostname ?? <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{laptop.serial_number ?? <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{laptop.brand_type ?? <span className="text-gray-300">—</span>}</td>
