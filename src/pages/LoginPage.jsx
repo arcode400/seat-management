@@ -55,7 +55,7 @@ export default function LoginPage() {
         {/* Overlay */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(160deg, rgba(10,30,80,0.88) 0%, rgba(13,71,161,0.75) 60%, rgba(0,0,0,0.65) 100%)' }}
+          style={{ background: 'linear-gradient(160deg, rgba(2,8,24,0.96) 0%, rgba(10,31,78,0.92) 55%, rgba(13,71,161,0.85) 100%)' }}
         />
 
         {/* Decorative circles */}
@@ -74,9 +74,7 @@ export default function LoginPage() {
         >
           {/* Logo */}
           <div>
-            <div className="inline-flex bg-white rounded-xl px-5 py-3">
-              <img src="/logo.png" alt="Angkasa Pura Supports" className="h-10 w-auto object-contain" />
-            </div>
+            <img src="/logo.png" alt="Angkasa Pura Supports" className="h-12 w-auto object-contain" style={{ mixBlendMode: 'lighten' }} />
           </div>
 
           {/* Middle text */}
@@ -146,9 +144,7 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <div className="inline-flex bg-white rounded-xl px-5 py-3">
-              <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" />
-            </div>
+            <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" style={{ mixBlendMode: 'lighten' }} />
           </div>
 
           {/* Tagline */}
