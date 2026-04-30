@@ -3,7 +3,7 @@ import { Search, Download, X, Cpu, MemoryStick, HardDrive, Monitor, Wifi, MapPin
 import { getAllLaptops } from '../services/laptopService'
 import { getActiveBorrows } from '../services/transactionService'
 
-const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
+const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000
 const OFFICE_WIFI = import.meta.env.VITE_OFFICE_WIFI
 const PAGE_SIZE = 10
 

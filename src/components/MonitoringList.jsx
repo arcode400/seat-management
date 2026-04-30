@@ -3,7 +3,7 @@ import { getAllLaptops } from '../services/laptopService'
 import { getActiveBorrows } from '../services/transactionService'
 import MonitoringMap from './MonitoringMap'
 
-const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000 // 3 menit
+const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000 // 10 menit
 
 // Pastikan timestamp dari Supabase selalu diparsing sebagai UTC
 function toUTC(ts) {
