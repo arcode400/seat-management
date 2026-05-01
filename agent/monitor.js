@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.5'
+const CURRENT_VERSION = '1.0.6'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -146,7 +146,7 @@ function getHardwareHealth() {
         { encoding: 'utf8', timeout: 8000, windowsHide: true }
       ).trim())
       if (!isNaN(code)) {
-        result.battery_status = [6,7,8,9].includes(code) ? 'Charging'
+        result.battery_status = [2,6,7,8,9].includes(code) ? 'Charging'
           : code === 3 ? 'Full'
           : [4,5].includes(code) ? 'Low'
           : 'Discharging'
