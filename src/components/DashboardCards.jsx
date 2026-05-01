@@ -78,7 +78,7 @@ export default function DashboardCards() {
           Monitoring Jaringan
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard label="Total Laptop" value={stats.total}
+          <StatCard label="Total Perangkat" value={stats.total}
             subtitle="Semua perangkat terdaftar"
             icon={Monitor} iconBg="#DBEAFE" iconColor="#1D4ED8" loading={loading} />
           <StatCard label="Online" value={stats.online}
