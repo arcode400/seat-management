@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.4'
+const CURRENT_VERSION = '1.0.5'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -120,48 +120,84 @@ function getSpecs() {
 function getHardwareHealth() {
   const result = {}
 
-  if (platform !== 'win32') return result
+  if (platform === 'win32') {
+    // Disk SMART
+    try {
+      const out = execSync(
+        `powershell -NonInteractive -Command "try{$s=Get-WmiObject -Namespace 'root\\wmi' -Class 'MSStorageDriver_FailurePredictStatus' -EA Stop;if(($s|Where-Object{$_.PredictFailure}).Count -gt 0){'Warning'}else{'Healthy'}}catch{'Unknown'}"`,
+        { encoding: 'utf8', timeout: 12000, windowsHide: true }
+      ).trim()
+      result.disk_health = out || 'Unknown'
+    } catch { result.disk_health = 'Unknown' }
 
-  // Disk SMART
-  try {
-    const out = execSync(
-      `powershell -NonInteractive -Command "try{$s=Get-WmiObject -Namespace 'root\\wmi' -Class 'MSStorageDriver_FailurePredictStatus' -EA Stop;if(($s|Where-Object{$_.PredictFailure}).Count -gt 0){'Warning'}else{'Healthy'}}catch{'Unknown'}"`,
-      { encoding: 'utf8', timeout: 12000, windowsHide: true }
-    ).trim()
-    result.disk_health = out || 'Unknown'
-  } catch { result.disk_health = 'Unknown' }
+    // Battery health %
+    try {
+      const pct = execSync(
+        `powershell -NonInteractive -Command "try{$f=(Get-WmiObject -Namespace 'root\\WMI' -Class 'BatteryFullChargedCapacity' -EA Stop).FullChargedCapacity;$d=(Get-WmiObject -Namespace 'root\\WMI' -Class 'BatteryStaticData' -EA Stop).DesignedCapacity;if($f -and $d -and $d -gt 0){[math]::Round([math]::Min($f*100/$d,100))}else{'NA'}}catch{'NA'}"`,
+        { encoding: 'utf8', timeout: 12000, windowsHide: true }
+      ).trim()
+      if (pct !== 'NA' && !isNaN(pct)) result.battery_health_pct = parseInt(pct)
+    } catch {}
 
-  // Battery health %
-  try {
-    const pct = execSync(
-      `powershell -NonInteractive -Command "try{$f=(Get-WmiObject -Namespace 'root\\WMI' -Class 'BatteryFullChargedCapacity' -EA Stop).FullChargedCapacity;$d=(Get-WmiObject -Namespace 'root\\WMI' -Class 'BatteryStaticData' -EA Stop).DesignedCapacity;if($f -and $d -and $d -gt 0){[math]::Round([math]::Min($f*100/$d,100))}else{'NA'}}catch{'NA'}"`,
-      { encoding: 'utf8', timeout: 12000, windowsHide: true }
-    ).trim()
-    if (pct !== 'NA' && !isNaN(pct)) result.battery_health_pct = parseInt(pct)
-  } catch {}
+    // Battery status
+    try {
+      const code = parseInt(execSync(
+        `powershell -NonInteractive -Command "try{(Get-WmiObject -Class Win32_Battery -EA Stop).BatteryStatus}catch{'NA'}"`,
+        { encoding: 'utf8', timeout: 8000, windowsHide: true }
+      ).trim())
+      if (!isNaN(code)) {
+        result.battery_status = [6,7,8,9].includes(code) ? 'Charging'
+          : code === 3 ? 'Full'
+          : [4,5].includes(code) ? 'Low'
+          : 'Discharging'
+      }
+    } catch {}
 
-  // Battery status
-  try {
-    const code = parseInt(execSync(
-      `powershell -NonInteractive -Command "try{(Get-WmiObject -Class Win32_Battery -EA Stop).BatteryStatus}catch{'NA'}"`,
-      { encoding: 'utf8', timeout: 8000, windowsHide: true }
-    ).trim())
-    if (!isNaN(code)) {
-      result.battery_status = [6,7,8,9].includes(code) ? 'Charging'
-        : code === 3 ? 'Full'
-        : [4,5].includes(code) ? 'Low'
-        : 'Discharging'
-    }
-  } catch {}
+    // Crash count 7 hari terakhir (Event ID 41 = unexpected restart/BSOD)
+    try {
+      const count = execSync(
+        `powershell -NonInteractive -Command "try{$d=(Get-Date).AddDays(-7);(Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='Microsoft-Windows-Kernel-Power';Id=41;StartTime=$d} -EA SilentlyContinue).Count}catch{0}"`,
+        { encoding: 'utf8', timeout: 15000, windowsHide: true }
+      ).trim()
+      result.crash_count_7d = parseInt(count) || 0
+    } catch { result.crash_count_7d = 0 }
 
-  // Crash count 7 hari terakhir (Event ID 41 = unexpected restart/BSOD)
-  try {
-    const count = execSync(
-      `powershell -NonInteractive -Command "try{$d=(Get-Date).AddDays(-7);(Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='Microsoft-Windows-Kernel-Power';Id=41;StartTime=$d} -EA SilentlyContinue).Count}catch{0}"`,
-      { encoding: 'utf8', timeout: 15000, windowsHide: true }
-    ).trim()
-    result.crash_count_7d = parseInt(count) || 0
-  } catch { result.crash_count_7d = 0 }
+  } else if (platform === 'darwin') {
+    // Disk SMART
+    try {
+      const out = execSync('diskutil info disk0 | grep -i SMART', { encoding: 'utf8', timeout: 8000 }).trim()
+      result.disk_health = out.toLowerCase().includes('verified') ? 'Healthy'
+        : out.toLowerCase().includes('failing') ? 'Warning' : 'Unknown'
+    } catch { result.disk_health = 'Unknown' }
+
+    // Battery health %
+    try {
+      const ioregOut = execSync("ioreg -l -n AppleSmartBattery | grep -E '\"MaxCapacity\"|\"DesignCapacity\"'", { encoding: 'utf8', timeout: 8000 })
+      const maxMatch    = ioregOut.match(/"MaxCapacity"\s*=\s*(\d+)/)
+      const designMatch = ioregOut.match(/"DesignCapacity"\s*=\s*(\d+)/)
+      if (maxMatch && designMatch) {
+        const max = parseInt(maxMatch[1]), design = parseInt(designMatch[1])
+        if (design > 0) result.battery_health_pct = Math.min(Math.round(max / design * 100), 100)
+      }
+    } catch {}
+
+    // Battery status
+    try {
+      const pmset = execSync('pmset -g batt', { encoding: 'utf8', timeout: 5000 })
+      result.battery_status = pmset.includes('AC Power') ? 'Charging'
+        : pmset.includes('discharging') ? 'Discharging'
+        : pmset.includes('charged') ? 'Full' : 'Unknown'
+    } catch {}
+
+    // Crash count 7 hari (kernel panic files)
+    try {
+      const count = execSync(
+        "find /Library/Logs/DiagnosticReports -name '*.panic' -mtime -7 2>/dev/null | wc -l",
+        { encoding: 'utf8', timeout: 8000 }
+      ).trim()
+      result.crash_count_7d = parseInt(count) || 0
+    } catch { result.crash_count_7d = 0 }
+  }
 
   return result
 }
