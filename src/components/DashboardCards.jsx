@@ -96,7 +96,7 @@ export default function DashboardCards() {
           Status Operasional
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Normal" value={stats.normal}
+          <StatCard label="Tersedia" value={stats.normal}
             subtitle={pct(stats.normal)}
             icon={CheckCircle} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
           <StatCard label="Perbaikan" value={stats.perbaikan}

@@ -16,7 +16,7 @@ const emptyForm = {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'available',   label: 'Normal' },
+  { value: 'available',   label: 'Tersedia' },
   { value: 'in_use',      label: 'Dipinjam' },
   { value: 'maintenance', label: 'Perbaikan' },
   { value: 'rusak',       label: 'Tidak Aktif' },

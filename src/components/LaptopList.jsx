@@ -9,14 +9,14 @@ const PAGE_SIZE = 8
 
 // Status config: value (DB) → tampilan
 const STATUS_CONFIG = {
-  available:   { label: 'Normal',      bg: '#DCFCE7', color: '#16A34A' },
+  available:   { label: 'Tersedia',    bg: '#DCFCE7', color: '#16A34A' },
   in_use:      { label: 'Dipinjam',    bg: '#FEF3C7', color: '#D97706' },
   maintenance: { label: 'Perbaikan',   bg: '#FEE2E2', color: '#DC2626' },
   rusak:       { label: 'Tidak Aktif', bg: '#F3F4F6', color: '#6B7280' },
 }
 
 const STATUS_OPTIONS = [
-  { value: 'available',   label: 'Normal' },
+  { value: 'available',   label: 'Tersedia' },
   { value: 'in_use',      label: 'Dipinjam' },
   { value: 'maintenance', label: 'Perbaikan' },
   { value: 'rusak',       label: 'Tidak Aktif' },
@@ -24,7 +24,7 @@ const STATUS_OPTIONS = [
 
 // Label filter → nilai DB
 const FILTER_MAP = {
-  'Normal':      'available',
+  'Tersedia':    'available',
   'Dipinjam':    'in_use',
   'Perbaikan':   'maintenance',
   'Tidak Aktif': 'rusak',
@@ -290,7 +290,7 @@ export default function LaptopList({ refreshTrigger, onEdit }) {
           </div>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 bg-white focus:outline-none cursor-pointer">
-            {['Semua', 'Normal', 'Dipinjam', 'Perbaikan', 'Tidak Aktif'].map(s => (
+            {['Semua', 'Tersedia', 'Dipinjam', 'Perbaikan', 'Tidak Aktif'].map(s => (
               <option key={s}>{s}</option>
             ))}
           </select>
