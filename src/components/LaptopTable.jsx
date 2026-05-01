@@ -130,6 +130,85 @@ function LaptopDetailModal({ laptop, status, user, onClose }) {
             </div>
           </div>
 
+          {/* Health Status */}
+          {(laptop.disk_health || laptop.battery_health_pct != null || laptop.ram_usage_pct != null || laptop.crash_count_7d != null) && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Kesehatan Perangkat</p>
+              <div className="space-y-3">
+
+                {/* Disk Health */}
+                {laptop.disk_health && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Disk Health</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{
+                      backgroundColor: laptop.disk_health === 'Healthy' ? '#DCFCE7' : laptop.disk_health === 'Warning' ? '#FEF3C7' : '#F3F4F6',
+                      color: laptop.disk_health === 'Healthy' ? '#16A34A' : laptop.disk_health === 'Warning' ? '#D97706' : '#6B7280',
+                    }}>
+                      {laptop.disk_health === 'Healthy' ? '✓ Healthy' : laptop.disk_health === 'Warning' ? '⚠ Warning' : laptop.disk_health}
+                    </span>
+                  </div>
+                )}
+
+                {/* Battery Health */}
+                {laptop.battery_health_pct != null && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs text-gray-500">Battery Health</span>
+                      <div className="flex items-center gap-2">
+                        {laptop.battery_status && (
+                          <span className="text-xs text-gray-400">{laptop.battery_status}</span>
+                        )}
+                        <span className="text-xs font-semibold" style={{
+                          color: laptop.battery_health_pct >= 70 ? '#16A34A' : laptop.battery_health_pct >= 40 ? '#D97706' : '#DC2626'
+                        }}>{laptop.battery_health_pct}%</span>
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-gray-100">
+                      <div className="h-1.5 rounded-full" style={{
+                        width: `${laptop.battery_health_pct}%`,
+                        backgroundColor: laptop.battery_health_pct >= 70 ? '#16A34A' : laptop.battery_health_pct >= 40 ? '#F59E0B' : '#DC2626',
+                      }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* RAM Usage */}
+                {laptop.ram_usage_pct != null && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs text-gray-500">RAM Usage</span>
+                      <span className="text-xs font-semibold" style={{
+                        color: laptop.ram_usage_pct >= 90 ? '#DC2626' : laptop.ram_usage_pct >= 75 ? '#D97706' : '#16A34A'
+                      }}>
+                        {laptop.ram_used_gb != null ? `${laptop.ram_used_gb} GB / ` : ''}{laptop.ram_usage_pct}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-gray-100">
+                      <div className="h-1.5 rounded-full" style={{
+                        width: `${Math.min(laptop.ram_usage_pct, 100)}%`,
+                        backgroundColor: laptop.ram_usage_pct >= 90 ? '#DC2626' : laptop.ram_usage_pct >= 75 ? '#F59E0B' : '#16A34A',
+                      }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Crash Count */}
+                {laptop.crash_count_7d != null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Crash / BSOD (7 hari)</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{
+                      backgroundColor: laptop.crash_count_7d === 0 ? '#DCFCE7' : laptop.crash_count_7d <= 2 ? '#FEF3C7' : '#FEE2E2',
+                      color: laptop.crash_count_7d === 0 ? '#16A34A' : laptop.crash_count_7d <= 2 ? '#D97706' : '#DC2626',
+                    }}>
+                      {laptop.crash_count_7d === 0 ? 'Tidak ada' : `${laptop.crash_count_7d}x`}
+                    </span>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+
           {/* Info Umum */}
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Informasi Perangkat</p>
