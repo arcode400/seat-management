@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.3'
+const CURRENT_VERSION = '1.0.4'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -15,6 +15,7 @@ const INTERVAL_MS        = 60 * 1000           // ping tiap 1 menit
 const CHECK_UPDATE_MS    = 60 * 60 * 1000      // cek update tiap 1 jam
 const SPECS_REFRESH_MS   = 24 * 60 * 60 * 1000 // refresh specs tiap 1 hari
 const LOCATION_REFRESH_MS = 30 * 60 * 1000
+const HEALTH_REFRESH_MS  = 6 * 60 * 60 * 1000  // refresh health tiap 6 jam
 const JITTER_MS          = Math.floor(Math.random() * 20 * 60 * 1000)
 
 const bootTime = new Date(Date.now() - os.uptime() * 1000).toISOString()
@@ -113,6 +114,56 @@ function getSpecs() {
     console.warn('[Specs] Gagal ambil specs:', err.message)
     return {}
   }
+}
+
+// ─── HARDWARE HEALTH ──────────────────────────────────────────────────────────
+function getHardwareHealth() {
+  const result = {}
+
+  if (platform !== 'win32') return result
+
+  // Disk SMART
+  try {
+    const out = execSync(
+      `powershell -NonInteractive -Command "try{$s=Get-WmiObject -Namespace 'root\\wmi' -Class 'MSStorageDriver_FailurePredictStatus' -EA Stop;if(($s|Where-Object{$_.PredictFailure}).Count -gt 0){'Warning'}else{'Healthy'}}catch{'Unknown'}"`,
+      { encoding: 'utf8', timeout: 12000, windowsHide: true }
+    ).trim()
+    result.disk_health = out || 'Unknown'
+  } catch { result.disk_health = 'Unknown' }
+
+  // Battery health %
+  try {
+    const pct = execSync(
+      `powershell -NonInteractive -Command "try{$f=(Get-WmiObject -Namespace 'root\\WMI' -Class 'BatteryFullChargedCapacity' -EA Stop).FullChargedCapacity;$d=(Get-WmiObject -Namespace 'root\\WMI' -Class 'BatteryStaticData' -EA Stop).DesignedCapacity;if($f -and $d -and $d -gt 0){[math]::Round([math]::Min($f*100/$d,100))}else{'NA'}}catch{'NA'}"`,
+      { encoding: 'utf8', timeout: 12000, windowsHide: true }
+    ).trim()
+    if (pct !== 'NA' && !isNaN(pct)) result.battery_health_pct = parseInt(pct)
+  } catch {}
+
+  // Battery status
+  try {
+    const code = parseInt(execSync(
+      `powershell -NonInteractive -Command "try{(Get-WmiObject -Class Win32_Battery -EA Stop).BatteryStatus}catch{'NA'}"`,
+      { encoding: 'utf8', timeout: 8000, windowsHide: true }
+    ).trim())
+    if (!isNaN(code)) {
+      result.battery_status = [6,7,8,9].includes(code) ? 'Charging'
+        : code === 3 ? 'Full'
+        : [4,5].includes(code) ? 'Low'
+        : 'Discharging'
+    }
+  } catch {}
+
+  // Crash count 7 hari terakhir (Event ID 41 = unexpected restart/BSOD)
+  try {
+    const count = execSync(
+      `powershell -NonInteractive -Command "try{$d=(Get-Date).AddDays(-7);(Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='Microsoft-Windows-Kernel-Power';Id=41;StartTime=$d} -EA SilentlyContinue).Count}catch{0}"`,
+      { encoding: 'utf8', timeout: 15000, windowsHide: true }
+    ).trim()
+    result.crash_count_7d = parseInt(count) || 0
+  } catch { result.crash_count_7d = 0 }
+
+  return result
 }
 
 // ─── LOCATION ─────────────────────────────────────────────────────────────────
@@ -225,9 +276,11 @@ async function checkUpdate() {
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let cachedLocation  = {}
 let cachedSpecs     = {}
+let cachedHealth    = {}
 let cachedLaptopId  = null
 let lastLocationRefresh = 0
 let lastSpecsRefresh    = 0
+let lastHealthRefresh   = 0
 let lastSsidLogDate     = null
 
 // ─── PING ─────────────────────────────────────────────────────────────────────
@@ -256,6 +309,20 @@ async function ping() {
     }
   }
 
+  // Refresh hardware health (disk, battery, crash)
+  if (Date.now() - lastHealthRefresh >= HEALTH_REFRESH_MS || lastHealthRefresh === 0) {
+    cachedHealth = getHardwareHealth()
+    lastHealthRefresh = Date.now()
+    if (cachedHealth.disk_health) {
+      console.log(`[${now.toLocaleTimeString()}] Health: Disk=${cachedHealth.disk_health} | Battery=${cachedHealth.battery_health_pct ?? '-'}% (${cachedHealth.battery_status ?? '-'}) | Crash 7d=${cachedHealth.crash_count_7d ?? 0}`)
+    }
+  }
+
+  // RAM usage realtime (tiap ping)
+  const usedMem = os.totalmem() - os.freemem()
+  const ram_used_gb    = Math.round(usedMem / 1073741824)
+  const ram_usage_pct  = Math.round(usedMem / os.totalmem() * 100)
+
   const { data, error } = await supabase
     .from('laptops')
     .update({
@@ -264,8 +331,11 @@ async function ping() {
       boot_time: bootTime,
       wifi_ssid: ssid,
       agent_version: CURRENT_VERSION,
+      ram_used_gb,
+      ram_usage_pct,
       ...cachedLocation,
       ...cachedSpecs,
+      ...cachedHealth,
     })
     .eq('hostname', hostname)
     .select()
@@ -278,7 +348,7 @@ async function ping() {
     if (sn) {
       const { data: snData } = await supabase
         .from('laptops')
-        .update({ hostname, last_seen: now.toISOString(), is_online: true, boot_time: bootTime, wifi_ssid: ssid, agent_version: CURRENT_VERSION, ...cachedLocation, ...cachedSpecs })
+        .update({ hostname, last_seen: now.toISOString(), is_online: true, boot_time: bootTime, wifi_ssid: ssid, agent_version: CURRENT_VERSION, ram_used_gb, ram_usage_pct, ...cachedLocation, ...cachedSpecs, ...cachedHealth })
         .eq('serial_number', sn)
         .select()
       if (snData && snData.length > 0) {
@@ -298,8 +368,11 @@ async function ping() {
       wifi_ssid: ssid,
       status: 'available',
       agent_version: CURRENT_VERSION,
+      ram_used_gb,
+      ram_usage_pct,
       ...cachedLocation,
       ...cachedSpecs,
+      ...cachedHealth,
     }])
     if (insertError) console.error(`[${now.toLocaleTimeString()}] Gagal daftar otomatis:`, insertError.message)
     else console.log(`[${now.toLocaleTimeString()}] Auto-registered: ${hostname}`)
