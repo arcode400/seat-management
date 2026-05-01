@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Monitor, FileText, RotateCcw, AlertTriangle, MapPin, Shield, ArrowRight, ChevronDown, Wifi, Bell, BarChart2, Users } from 'lucide-react'
+import { Monitor, FileText, RotateCcw, AlertTriangle, MapPin, Shield, ArrowRight, ChevronDown, Wifi, Bell, BarChart2, Users, Activity } from 'lucide-react'
 
 function useInView(threshold = 0.12) {
   const ref = useRef(null)
@@ -62,6 +62,7 @@ const FEATURES = [
   { icon: Wifi,          color: '#16A34A', bg: 'rgba(22,163,74,0.1)',   title: 'Agent Auto-Update',       desc: 'Agent di laptop user otomatis update sendiri. Tidak perlu keliling ke setiap perangkat.' },
   { icon: Users,         color: '#EA580C', bg: 'rgba(234,88,12,0.1)',   title: 'Multi-Role Access',       desc: 'Super Admin, Admin, dan Staff punya akses berbeda. Data aman dan terkontrol.' },
   { icon: BarChart2,     color: '#0D47A1', bg: 'rgba(13,71,161,0.1)',   title: 'Export & Laporan',        desc: 'Export CSV atau cetak PDF. Filter per bulan, tahun, atau status untuk laporan yang akurat.' },
+  { icon: Activity,      color: '#BE185D', bg: 'rgba(190,24,93,0.1)',   title: 'Hardware Health Monitor', desc: 'Pantau kesehatan disk, baterai, RAM, dan riwayat laptop mati mendadak — semua otomatis dari agent.' },
 ]
 
 const STEPS = [
