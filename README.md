@@ -1,6 +1,6 @@
 # Handover Document — Seat Management System
 **PT Angkasa Pura Supports — IT Support Team**
-Dibuat oleh: M. Aris Saputro | Terakhir diupdate: April 2026
+Dibuat oleh: M. Aris Saputro | Terakhir diupdate: Mei 2026
 
 ---
 
@@ -29,11 +29,18 @@ Sistem ini adalah aplikasi web internal untuk mengelola aset IT (laptop, PC, per
 
 ## Struktur Halaman & Fitur
 
+### 0. Landing Page
+- Halaman publik di URL root (`/`) sebelum login
+- Animasi network dots, scroll reveal, counter statistik
+- Menampilkan fitur sistem, cara kerja, dan CTA login
+- Branding APS × Injourney
+
 ### 1. Dashboard
 - Kartu statistik: Normal, Perbaikan, Dipinjam, Tidak Aktif
 - Donut chart distribusi status laptop
 - Line chart aktivitas peminjaman 7 hari terakhir
 - Tabel monitoring real-time: hostname, serial number, tipe, user, status online/offline, last seen, IP address, lokasi, WiFi SSID, lokasi kantor
+- **Detail perangkat** (klik baris): spesifikasi hardware + kesehatan perangkat (disk health, battery, RAM usage, laptop mati mendadak)
 - Alert laptop yang sudah 7+ hari di luar kantor
 - Filter: status, lokasi, WiFi
 - Export CSV data monitoring
@@ -98,11 +105,15 @@ Agent adalah script Node.js yang diinstall di tiap laptop user. Fungsinya mengir
 - `cpu`, `ram_gb`, `storage_gb`, `storage_free_gb`, `os_name` — spesifikasi hardware
 - `serial_number` — nomor seri laptop
 - `agent_version` — versi agent yang berjalan
+- `ram_used_gb`, `ram_usage_pct` — penggunaan RAM realtime (setiap ping)
+- `disk_health` — status SMART disk: `Healthy` / `Warning` / `Unknown` (setiap 6 jam)
+- `battery_health_pct` — kesehatan baterai dalam % berdasarkan kapasitas penuh vs desain (setiap 6 jam)
+- `battery_status` — kondisi baterai: `Charging` / `Discharging` / `Full` / `Low` (setiap 6 jam)
+- `crash_count_7d` — jumlah laptop mati mendadak dalam 7 hari terakhir dari Event Log (setiap 6 jam)
 
 ### File agent:
-- `agent/monitor.js` — script utama (Windows)
+- `agent/monitor.js` — script utama, support Windows & macOS
 - `agent/install-service.js` — script instalasi Task Scheduler (Windows)
-- `agent/monitor-mac.js` — script utama (macOS)
 - `agent/.env` — konfigurasi (SUPABASE_URL, SUPABASE_ANON_KEY, OFFICE_WIFI)
 
 ### Cara install di laptop Windows:
@@ -125,10 +136,13 @@ Agent cek update setiap 1 jam ke tabel `agent_config` di Supabase. Jika ada vers
 ### Interval agent:
 | Aksi | Interval |
 |---|---|
-| Ping (kirim data) | Setiap 1 menit |
+| Ping (kirim data + RAM usage) | Setiap 1 menit |
 | Refresh lokasi (IP geolocation) | Setiap 30 menit |
 | Refresh specs hardware | Setiap 24 jam |
+| Refresh health (disk, battery, crash) | Setiap 6 jam |
 | Cek update versi | Setiap 1 jam |
+
+### Versi agent saat ini: `v1.0.6`
 
 ---
 
@@ -150,6 +164,14 @@ Tabel-tabel utama:
 | `active_sessions` | Session aktif user yang sedang login |
 | `issues` | Laporan kerusakan/masalah |
 | `form_komplain` | Form komplain dari user/teknisi |
+
+Kolom health monitoring di tabel `laptops` (ditambah Mei 2026):
+- `disk_health` (text) — hasil SMART disk
+- `battery_health_pct` (integer) — % kesehatan baterai
+- `battery_status` (text) — status pengisian baterai
+- `ram_used_gb` (integer) — RAM terpakai dalam GB
+- `ram_usage_pct` (integer) — % penggunaan RAM
+- `crash_count_7d` (integer) — jumlah mati mendadak 7 hari terakhir
 
 **Row Level Security (RLS):** Sudah diaktifkan di semua tabel. Data tidak bisa diakses tanpa autentikasi.
 
@@ -180,6 +202,7 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 ## Status Pengembangan (April 2026)
 
 ### Sudah Selesai:
+- [x] Landing page publik dengan animasi
 - [x] Dashboard monitoring real-time
 - [x] Manajemen aset (CRUD)
 - [x] Peminjaman aset + BAST otomatis
@@ -188,9 +211,10 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 - [x] Tracking kerusakan (Issues)
 - [x] Form Komplain
 - [x] BA Pengeluaran Aset khusus
-- [x] Agent Windows & macOS
+- [x] Agent Windows & macOS (satu file `monitor.js`)
 - [x] Auto-update agent
 - [x] Alert laptop di luar kantor 7+ hari
+- [x] Hardware health monitoring (disk SMART, battery, RAM, crash detection)
 - [x] Audit log semua aktivitas
 - [x] Export CSV & cetak PDF
 - [x] Row Level Security (RLS)
