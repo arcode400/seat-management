@@ -195,7 +195,7 @@ function LaptopDetailModal({ laptop, status, user, onClose }) {
                 {/* Crash Count */}
                 {laptop.crash_count_7d != null && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Crash / BSOD (7 hari)</span>
+                    <span className="text-xs text-gray-500">Laptop Mati Mendadak (7 hari)</span>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{
                       backgroundColor: laptop.crash_count_7d === 0 ? '#DCFCE7' : laptop.crash_count_7d <= 2 ? '#FEF3C7' : '#FEE2E2',
                       color: laptop.crash_count_7d === 0 ? '#16A34A' : laptop.crash_count_7d <= 2 ? '#D97706' : '#DC2626',
