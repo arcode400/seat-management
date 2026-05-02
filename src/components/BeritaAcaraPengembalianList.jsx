@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { FileText, Printer, Trash2, RotateCcw } from 'lucide-react'
+import { FileText, Printer, Trash2, RotateCcw, MessageCircle } from 'lucide-react'
 import { getAllBAP, deleteBAP } from '../services/beritaAcaraPengembalianService'
 import { printBeritaAcaraPengembalian } from '../utils/printBeritaAcaraPengembalian'
+import { shareBAPWhatsApp } from '../utils/shareBAPWhatsApp'
 import { useAuth } from '../context/AuthContext'
 
 export default function BeritaAcaraPengembalianList({ refreshTrigger }) {
@@ -111,6 +112,14 @@ export default function BeritaAcaraPengembalianList({ refreshTrigger }) {
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DBEAFE'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}>
                     <Printer size={12} /> Print
+                  </button>
+                  <button
+                    onClick={() => shareBAPWhatsApp(bap)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer transition-colors"
+                    style={{ backgroundColor: '#F0FDF4', color: '#16A34A' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFCE7'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F0FDF4'}>
+                    <MessageCircle size={12} /> WA
                   </button>
                   {isAdmin && (
                     <button

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil } from 'lucide-react'
+import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil, MessageCircle } from 'lucide-react'
+import { shareBAPWhatsApp } from '../utils/shareBAPWhatsApp'
 import { printReport } from '../utils/printReport'
 import { getAllLaptops, updateLaptop } from '../services/laptopService'
 import { getAllBeritaAcara, deleteBeritaAcara, updateBeritaAcara } from '../services/beritaAcaraService'
@@ -769,6 +770,16 @@ export default function PeminjamanPage() {
                                   onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}>
                                   <Printer size={12} /> Print
                                 </button>
+                                {!isBast && (
+                                  <button
+                                    onClick={() => shareBAPWhatsApp(r)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                                    style={{ backgroundColor: '#F0FDF4', color: '#16A34A' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFCE7'}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F0FDF4'}>
+                                    <MessageCircle size={12} /> WA
+                                  </button>
+                                )}
                                 {isAdmin && (
                                   <button
                                     onClick={() => setEditingRiwayat(r)}

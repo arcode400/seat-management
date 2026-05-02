@@ -18,7 +18,7 @@ const emptyForm = {
   spek_ram: '',
   spek_storage: '',
   teknisi: '',
-  pengembalian_nama: '', pengembalian_jabatan: '',
+  pengembalian_nama: '', pengembalian_jabatan: '', pengembalian_phone: '',
   penerima_nama: 'FAJAR AJI NUGROHO', penerima_jabatan: 'PLT. IT SERVICES & SUPPORT SPECIALIST',
   icloud_lock: 'Tidak',
   kelengkapan_laptop: 'Ada',
@@ -384,6 +384,10 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
             <Field label="Jabatan">
               <input name="pengembalian_jabatan" value={form.pengembalian_jabatan} onChange={handleChange}
                 placeholder="Unit / Jabatan" className={inputClass} {...focus} />
+            </Field>
+            <Field label="No. WhatsApp (Opsional)">
+              <input name="pengembalian_phone" value={form.pengembalian_phone} onChange={handleChange}
+                placeholder="0812-3456-7890 (untuk kirim BAP via WA)" className={inputClass} {...focus} />
             </Field>
             <SignaturePad
               label="Tanda Tangan User (Opsional)"
