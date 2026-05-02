@@ -120,13 +120,102 @@ Agent adalah script Node.js yang diinstall di tiap laptop user. Fungsinya mengir
 - `agent/.env` — konfigurasi (SUPABASE_URL, SUPABASE_ANON_KEY, OFFICE_WIFI)
 
 ### Cara install di laptop Windows:
-1. Copy folder `agent/` ke `C:\SeatAgent\`
-2. Isi file `.env` dengan kredensial Supabase
-3. Jalankan `node install-service.js` sebagai Administrator
-4. Task Scheduler otomatis dibuat → agent jalan setiap boot
+
+**Persiapan:** copy folder `agent/` ke laptop user (USB / network share). Pastikan file `agent/.env` sudah diisi `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `OFFICE_WIFI`. Node.js wajib terinstall (download di https://nodejs.org, pilih LTS).
+
+**Langkah install:**
+
+1. Pindahkan folder `agent` ke `C:\SeatAgent\` (atau lokasi tetap lain — jangan di Downloads/Desktop yang bisa kehapus)
+2. Buka **Command Prompt sebagai Administrator** (klik kanan → Run as Administrator)
+3. Masuk ke folder agent:
+   ```cmd
+   cd C:\SeatAgent
+   ```
+4. Install dependencies:
+   ```cmd
+   npm install
+   ```
+5. Jalankan installer service:
+   ```cmd
+   node install-service.js
+   ```
+   Script ini bikin **Windows Task Scheduler** task yang auto-start tiap boot, jalan di background tanpa window (lewat `start-hidden.vbs`).
+
+**Alternatif cepat:** jalankan `setup.bat` (sebagai Administrator) — bundling semua step di atas.
+
+**Cek agent jalan:**
+- Buka **Task Manager** → tab Details → cari `node.exe`
+- Atau buka **Task Scheduler** → cari task bernama `SeatAgent`
+- Cek log di `C:\SeatAgent\agent.log` (jika diaktifkan)
+
+**Uninstall:** jalankan `uninstall.bat` sebagai Administrator, atau `node uninstall-service.js`.
 
 ### Cara install di laptop macOS:
-Gunakan folder `agent-mac/` dengan prosedur serupa.
+
+File yang dipakai ada di folder `agent-mac/` (terpisah dari `agent/` Windows karena pakai LaunchAgent, bukan Task Scheduler).
+
+**Persiapan:** copy folder `agent-mac/` ke Mac user (lewat USB / AirDrop / cloud), taruh di Desktop atau Downloads. Pastikan file `.env` sudah diisi `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `OFFICE_WIFI`.
+
+**Langkah install:**
+
+1. Buka **Terminal** (Command + Space → ketik "Terminal" → Enter)
+
+2. Cek Node.js:
+   ```bash
+   node -v
+   ```
+   - Kalau muncul versi (mis. `v20.x.x`) → langsung ke step 5
+   - Kalau error / not found → lanjut step 3
+
+3. Install Homebrew (sekali saja per Mac):
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+   Diminta password Mac → ketik (tidak terlihat saat diketik, normal). Tunggu 5–10 menit.
+
+4. Tambahkan Homebrew ke PATH lalu install Node:
+   ```bash
+   # Cek arsitektur dulu
+   uname -m
+   # Kalau arm64 (M1/M2/M3):
+   echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile && eval "$(/opt/homebrew/bin/brew shellenv)"
+   # Kalau x86_64 (Intel):
+   echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile && eval "$(/usr/local/bin/brew shellenv)"
+
+   brew install node
+   ```
+
+5. Masuk ke folder agent-mac (sesuaikan lokasi):
+   ```bash
+   cd ~/Desktop/agent-mac     # atau ~/Downloads/agent-mac
+   ```
+
+6. Beri izin eksekusi & jalankan setup:
+   ```bash
+   chmod +x setup.sh uninstall.sh
+   ./setup.sh
+   ```
+
+   Script `setup.sh` otomatis:
+   - Salin file ke `~/.SeatAgent/`
+   - `npm install` dependencies
+   - Bikin LaunchAgent di `~/Library/LaunchAgents/com.seatmanagement.agent.plist`
+   - Load & jalankan agent (auto-start tiap login)
+
+   Selesai jika muncul: `Agent akan otomatis berjalan setiap kali Mac menyala.`
+
+**Cek agent jalan:**
+```bash
+launchctl list | grep seatmanagement
+tail -f /tmp/SeatAgent.log
+```
+
+**Uninstall:**
+```bash
+cd ~/Desktop/agent-mac && ./uninstall.sh
+```
+
+> Catatan: instruksi step-by-step lengkap untuk user awam juga ada di `agent-mac/CARA_INSTALL.txt`.
 
 ### Auto-update:
 Agent cek update setiap 1 jam ke tabel `agent_config` di Supabase. Jika ada versi baru, agent download `monitor.js` terbaru dari Supabase Storage bucket `agent-updates`, lalu restart otomatis.
