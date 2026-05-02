@@ -83,6 +83,8 @@ function LaptopDetailModal({ laptop, status, user, onClose }) {
     { label: 'Serial Number', value: laptop.serial_number },
     { label: 'Kode Aset',     value: laptop.asset_code },
     { label: 'Tipe',          value: laptop.brand_type },
+    { label: 'Perangkat',     value: [laptop.manufacturer, laptop.brand_type, laptop.model && `(${laptop.model})`].filter(Boolean).join(' ') || null },
+    { label: 'OS Username',   value: laptop.os_username },
     { label: 'IP Address',    value: laptop.ip_address },
     { label: 'WiFi',          value: laptop.wifi_ssid },
     { label: 'Lokasi',        value: laptop.city && laptop.country ? `${laptop.city}, ${laptop.country}` : null },

@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.6'
+const CURRENT_VERSION = '1.0.7'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -89,7 +89,25 @@ function getSpecs() {
       const serial_number = execSync('wmic bios get serialnumber /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
         .match(/SerialNumber=(.+)/i)?.[1]?.trim() ?? null
 
-      return { cpu, ram_gb, storage_gb, storage_free_gb, storage_info, os_name, serial_number }
+      let model = null
+      let manufacturer = null
+      try {
+        const cs = execSync('wmic computersystem get Model,Manufacturer /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
+        model        = cs.match(/Model=(.+)/i)?.[1]?.trim() || null
+        manufacturer = cs.match(/Manufacturer=(.+)/i)?.[1]?.trim() || null
+      } catch {}
+
+      if (!model || /to be filled|system product|default string/i.test(model)) {
+        try {
+          const bios = execSync('wmic bios get Manufacturer,SMBIOSBIOSVersion /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
+          if (!manufacturer) manufacturer = bios.match(/Manufacturer=(.+)/i)?.[1]?.trim() || null
+          if (!model)        model        = bios.match(/SMBIOSBIOSVersion=(.+)/i)?.[1]?.trim() || null
+        } catch {}
+      }
+
+      const os_username = os.userInfo().username
+
+      return { cpu, ram_gb, storage_gb, storage_free_gb, storage_info, os_name, serial_number, model, manufacturer, os_username }
     } else {
       const cpu = execSync('sysctl -n machdep.cpu.brand_string', { encoding: 'utf8', timeout: 5000 }).trim() || null
 
@@ -108,7 +126,15 @@ function getSpecs() {
       const snOut = execSync('ioreg -c IOPlatformExpertDevice -d 2', { encoding: 'utf8', timeout: 5000 })
       const serial_number = snOut.match(/"IOPlatformSerialNumber" = "(.+)"/)?.[1]?.trim() ?? null
 
-      return { cpu, ram_gb, storage_gb, storage_free_gb, storage_info, os_name, serial_number }
+      let model = null
+      const manufacturer = 'Apple'
+      try {
+        model = execSync('sysctl -n hw.model', { encoding: 'utf8', timeout: 5000 }).trim() || null
+      } catch {}
+
+      const os_username = os.userInfo().username
+
+      return { cpu, ram_gb, storage_gb, storage_free_gb, storage_info, os_name, serial_number, model, manufacturer, os_username }
     }
   } catch (err) {
     console.warn('[Specs] Gagal ambil specs:', err.message)
@@ -342,6 +368,7 @@ async function ping() {
     lastSpecsRefresh = Date.now()
     if (cachedSpecs.cpu) {
       console.log(`[${now.toLocaleTimeString()}] Specs: ${cachedSpecs.cpu} | RAM: ${cachedSpecs.ram_gb}GB | Storage: ${cachedSpecs.storage_free_gb}GB free / ${cachedSpecs.storage_gb}GB | OS: ${cachedSpecs.os_name}`)
+      console.log(`[${now.toLocaleTimeString()}] Device: ${cachedSpecs.manufacturer ?? '-'} ${cachedSpecs.model ?? '-'} | SN: ${cachedSpecs.serial_number ?? '-'} | User: ${cachedSpecs.os_username ?? '-'}`)
     }
   }
 
