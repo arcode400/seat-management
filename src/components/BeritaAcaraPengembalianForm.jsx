@@ -5,6 +5,7 @@ import { getAllUsers } from '../services/userService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
 import { createBAP } from '../services/beritaAcaraPengembalianService'
 import { useAuth } from '../context/AuthContext'
+import SignaturePad from './SignaturePad'
 
 const emptyForm = {
   nomor_ba: '',
@@ -27,6 +28,7 @@ const emptyForm = {
   kondisi_layar: 'Berfungsi',
   kondisi_charging: 'Berfungsi',
   keterangan: '',
+  signature_pengembalian: null,
 }
 
 const JENIS_ASET = ['Laptop', 'MacBook', 'iPad', 'Tablet', 'Printer', 'PC', 'AIO']
@@ -203,6 +205,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
         ...form,
         nomor_ba:   nomorSuffix.trim() ? `BA.ITO.${nomorSuffix.trim()}` : 'BA.ITO.',
         created_by: user?.email ?? 'unknown',
+        signed_at:  form.signature_pengembalian ? new Date().toISOString() : null,
       })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
@@ -382,6 +385,11 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
               <input name="pengembalian_jabatan" value={form.pengembalian_jabatan} onChange={handleChange}
                 placeholder="Unit / Jabatan" className={inputClass} {...focus} />
             </Field>
+            <SignaturePad
+              label="Tanda Tangan User (Opsional)"
+              value={form.signature_pengembalian}
+              onChange={sig => setForm(f => ({ ...f, signature_pengembalian: sig }))}
+            />
           </div>
         </div>
 

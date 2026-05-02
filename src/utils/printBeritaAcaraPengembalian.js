@@ -109,7 +109,8 @@ export function printBeritaAcaraPengembalian(bap) {
     }
     .ttd-box { width: 45%; text-align: center; }
     .ttd-box .ttd-label { font-weight: bold; margin-bottom: 1px; }
-    .ttd-space { height: 80px; }
+    .ttd-space { height: 80px; display: flex; align-items: center; justify-content: center; }
+    .ttd-space img { max-height: 80px; max-width: 100%; object-fit: contain; }
     .ttd-name {
       font-weight: bold;
       border-top: 1px solid #000;
@@ -235,7 +236,7 @@ export function printBeritaAcaraPengembalian(bap) {
     </div>
     <div class="ttd-box">
       <div class="ttd-label">PIHAK PERTAMA</div>
-      <div class="ttd-space"></div>
+      <div class="ttd-space">${bap.signature_pengembalian ? `<img src="${bap.signature_pengembalian}" alt="ttd"/>` : ''}</div>
       <div>
         <span class="ttd-name">( ${bap.pengembalian_nama ?? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</span>
       </div>
@@ -250,6 +251,10 @@ export function printBeritaAcaraPengembalian(bap) {
 </html>`
 
   const win = window.open('', '_blank', 'width=850,height=950')
+  if (!win) {
+    alert('Popup diblokir oleh browser.\n\nKlik icon di address bar → "Always allow pop-ups from this site", lalu coba print ulang dari Riwayat BA.')
+    return
+  }
   win.document.write(html)
   win.document.close()
   win.focus()

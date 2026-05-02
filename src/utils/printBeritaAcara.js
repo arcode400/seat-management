@@ -251,6 +251,12 @@ export function printBeritaAcara(ba) {
     Demikian Tanda Terima ini dibuat dengan sesungguhnya untuk digunakan sebagaimana mestinya.
   </div>
 
+  ${ba.keterangan ? `
+  <div style="margin: 6px 0 10px 0; font-style: italic; font-size: 9.5pt;">
+    <strong>Catatan:</strong> ${ba.keterangan}
+  </div>
+  ` : ''}
+
   <!-- Tanda tangan: KEDUA kiri, PERTAMA kanan (sesuai template) -->
   <div class="ttd-row">
     <div class="ttd-box">
@@ -278,6 +284,10 @@ export function printBeritaAcara(ba) {
 </html>`
 
   const win = window.open('', '_blank', 'width=850,height=950')
+  if (!win) {
+    alert('Popup diblokir oleh browser.\n\nKlik icon di address bar → "Always allow pop-ups from this site", lalu coba print ulang dari Riwayat BA.')
+    return
+  }
   win.document.write(html)
   win.document.close()
   win.focus()

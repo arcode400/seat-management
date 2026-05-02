@@ -482,10 +482,10 @@ export default function PeminjamanPage() {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-gray-100 overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => { setTab(key); setSearch(''); setRiwayatFilter('semua') }}
-              className="flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-0 cursor-pointer transition-colors"
+              className="flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-0 cursor-pointer transition-colors flex-shrink-0 whitespace-nowrap"
               style={{
                 color: tab === key ? '#0D47A1' : '#6B7280',
                 borderBottom: tab === key ? '2px solid #0D47A1' : '2px solid transparent',
