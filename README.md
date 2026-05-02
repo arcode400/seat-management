@@ -104,6 +104,9 @@ Agent adalah script Node.js yang diinstall di tiap laptop user. Fungsinya mengir
 - `ip_address`, `city`, `country`, `latitude`, `longitude` — dari IP geolocation
 - `cpu`, `ram_gb`, `storage_gb`, `storage_free_gb`, `os_name` — spesifikasi hardware
 - `serial_number` — nomor seri laptop
+- `model` — kode model dari Win32_ComputerSystem (contoh: `82AU`), fallback ke BIOS jika kosong
+- `manufacturer` — pabrikan: `LENOVO` / `Dell Inc.` / `HP` / `Apple` dll
+- `os_username` — username Windows/macOS yang sedang login
 - `agent_version` — versi agent yang berjalan
 - `ram_used_gb`, `ram_usage_pct` — penggunaan RAM realtime (setiap ping)
 - `disk_health` — status SMART disk: `Healthy` / `Warning` / `Unknown` (setiap 6 jam)
@@ -142,7 +145,7 @@ Agent cek update setiap 1 jam ke tabel `agent_config` di Supabase. Jika ada vers
 | Refresh health (disk, battery, crash) | Setiap 6 jam |
 | Cek update versi | Setiap 1 jam |
 
-### Versi agent saat ini: `v1.0.6`
+### Versi agent saat ini: `v1.0.7`
 
 ---
 
@@ -172,6 +175,11 @@ Kolom health monitoring di tabel `laptops` (ditambah Mei 2026):
 - `ram_used_gb` (integer) — RAM terpakai dalam GB
 - `ram_usage_pct` (integer) — % penggunaan RAM
 - `crash_count_7d` (integer) — jumlah mati mendadak 7 hari terakhir
+- `model` (text) — kode model perangkat dari WMI/sysctl
+- `manufacturer` (text) — pabrikan perangkat
+- `os_username` (text) — username OS yang sedang login
+
+Constraint tambahan: unique index `laptops_serial_number_unique` pada kolom `serial_number` (mencegah duplicate auto-register).
 
 **Row Level Security (RLS):** Sudah diaktifkan di semua tabel. Data tidak bisa diakses tanpa autentikasi.
 
@@ -215,6 +223,7 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 - [x] Auto-update agent
 - [x] Alert laptop di luar kantor 7+ hari
 - [x] Hardware health monitoring (disk SMART, battery, RAM, crash detection)
+- [x] Auto-detect model, manufacturer, dan OS username dari agent (v1.0.7)
 - [x] Audit log semua aktivitas
 - [x] Export CSV & cetak PDF
 - [x] Row Level Security (RLS)
