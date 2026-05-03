@@ -52,9 +52,40 @@ Sistem ini adalah aplikasi web internal untuk mengelola aset IT (laptop, PC, per
 - Admin bisa ubah status langsung dari tabel
 
 ### 3. Peminjaman
-- **Tab Tersedia:** aset yang siap dipinjam, admin bisa klik Pinjamkan → buat BAST
-- **Tab Sedang Dipinjam:** aset yang sedang dipakai, bisa dikembalikan (dengan/tanpa BAP)
+- **Tab Tersedia:** aset yang siap dipinjam, admin bisa klik Pinjamkan → buat BAST. Mode "Pinjam Sekaligus" untuk pinjam banyak laptop dalam 1 tim sekaligus (lihat Workflow Tanda Tangan Digital di bawah).
+- **Tab Sedang Dipinjam:** aset yang sedang dipakai, bisa dikembalikan (dengan/tanpa BAP). Teknisi juga bisa pakai fitur ini untuk narik laptop dari user.
 - **Tab Riwayat BA:** semua BAST dan BAP, bisa filter tahun/bulan, cetak PDF, export CSV, edit data, hapus (super admin)
+  - Status badge BAST: ✓ Signed / ⏳ Belum TTD / ⏳ Pending
+  - Tombol Copy Link Sign untuk kirim ulang link tandatangan ke user
+  - Tombol Reset TTD (admin) untuk batalkan tandatangan kalau salah user yang ttd
+  - Tombol Share WA untuk BAP — kirim link BAP ke nomor WA user dalam 1 tap
+
+### 3.1. Workflow Tanda Tangan Digital (BAP & BAST)
+
+User peminjam **tidak punya akun login** ke sistem. Distribusi dokumen lewat **WhatsApp** dengan link unik per BA.
+
+**BAP (Pengembalian):**
+1. Admin/teknisi bikin BAP via form, isi tanda tangan user di kotak signature pad
+2. Optional: isi nomor WhatsApp user
+3. Submit → klik tombol WA di Riwayat BA → WhatsApp kebuka dengan template pesan + link `/bap/<id>` siap kirim
+4. User klik link → halaman publik nampilin BAP + auto-trigger dialog "Save as PDF" untuk arsip
+
+**BAST (Serah Terima):**
+1. Admin bikin BAST via form Pinjamkan — nama peminjam **opsional** (bisa kosong)
+2. Admin klik tombol "Copy Link Sign" → link `/bast-sign/<id>` tersalin
+3. Kirim link ke user via WA / chat
+4. User buka link → liat info laptop (hostname + SN + kode aset + merek/tipe) → centang konfirmasi → isi nama, jabatan, tanda tangan → submit
+5. Status BAST otomatis berubah dari `Pending` → `Signed`
+6. Anti double-submit: link cuma valid 1x, kalau diakses kedua kali muncul "sudah ditandatangani"
+7. Admin bisa Reset TTD kalau ada salah user yang ttd
+
+**Pinjam Sekaligus (Bulk BAST):**
+1. Tab Tersedia → klik "Pinjam Sekaligus" → centang banyak laptop
+2. Floating bar muncul → klik "Buat N BAST"
+3. Modal: input PJ Tim (nama + WA), tanggal, teknisi
+4. Submit → N BAST tergenerate (nama-jabatan kosong, spek auto-fill dari agent)
+5. Modal sukses kasih daftar N link sign + tombol "Kirim WA PJ" → 1 pesan WA berisi semua link, PJ tinggal forward ke timnya
+6. Setiap user di tim klik link mereka masing-masing → ttd → status update otomatis
 
 ### 4. Issues (Tracking Kerusakan)
 - Input laporan kerusakan/masalah laptop
@@ -82,13 +113,13 @@ Sistem ini adalah aplikasi web internal untuk mengelola aset IT (laptop, PC, per
 
 ## Role & Hak Akses
 
-| Role | Akses |
-|---|---|
-| `super_admin` | Semua fitur + hapus BA + kelola semua user |
-| `admin` | Semua fitur kecuali hapus BA dan kelola super_admin |
-| `staff` | Dashboard, Aset (lihat), Peminjaman (lihat), Issues, Form Komplain |
+| Role | DB value | Akses |
+|---|---|---|
+| Super Admin | `super_admin` | Semua fitur + hapus BA + kelola semua user |
+| Admin | `admin` | Semua fitur kecuali hapus BA dan kelola super_admin |
+| **Teknisi** | `staff` | Dashboard, Aset (lihat), Peminjaman (lihat + bikin BAP + edit BAP yang dia bikin sendiri), Issues, Form Komplain. **Tidak bisa**: bikin/edit BAST, Pinjam Sekaligus, kelola user, audit log, BA Khusus. |
 
-Role diset di tabel `profiles` kolom `role` di Supabase.
+Role diset di tabel `profiles` kolom `role` di Supabase. Label "Teknisi" di UI = role `staff` di DB.
 
 ---
 
@@ -103,6 +134,8 @@ Agent adalah script Node.js yang diinstall di tiap laptop user. Fungsinya mengir
 - `wifi_ssid` — nama WiFi yang terkoneksi
 - `ip_address`, `city`, `country`, `latitude`, `longitude` — dari IP geolocation
 - `cpu`, `ram_gb`, `storage_gb`, `storage_free_gb`, `os_name` — spesifikasi hardware
+- `storage_info` — detail per logical drive: `C: 256GB (128GB free) | D: 1151GB (601GB free)`
+- `storage_summary` — ringkas per disk fisik via Get-PhysicalDisk: `SSD 512 GB + HDD 1 TB`
 - `serial_number` — nomor seri laptop
 - `model` — kode model dari Win32_ComputerSystem (contoh: `82AU`), fallback ke BIOS jika kosong
 - `manufacturer` — pabrikan: `LENOVO` / `Dell Inc.` / `HP` / `Apple` dll
@@ -234,7 +267,7 @@ Agent cek update setiap 1 jam ke tabel `agent_config` di Supabase. Jika ada vers
 | Refresh health (disk, battery, crash) | Setiap 6 jam |
 | Cek update versi | Setiap 1 jam |
 
-### Versi agent saat ini: `v1.0.7`
+### Versi agent saat ini: `v1.0.8`
 
 ---
 
@@ -267,6 +300,21 @@ Kolom health monitoring di tabel `laptops` (ditambah Mei 2026):
 - `model` (text) — kode model perangkat dari WMI/sysctl
 - `manufacturer` (text) — pabrikan perangkat
 - `os_username` (text) — username OS yang sedang login
+- `storage_summary` (text) — format clean per disk fisik untuk prefill BAST
+
+Kolom tanda tangan digital di tabel `berita_acara` (BAST, ditambah Mei 2026):
+- `signature_penerima` (text) — base64 PNG tanda tangan user peminjam
+- `signed_at_penerima` (timestamptz) — waktu user submit tanda tangan
+
+Kolom tanda tangan digital di tabel `berita_acara_pengembalian` (BAP):
+- `signature_pengembalian` (text) — base64 PNG tanda tangan user
+- `signed_at` (timestamptz) — waktu BAP ditandatangani
+- `pengembalian_phone` (text) — nomor WhatsApp user untuk distribusi link
+
+RPC functions untuk halaman publik (anon-accessible):
+- `get_bap_public(p_id uuid)` — fetch BAP by id untuk halaman `/bap/:id`
+- `get_bast_public(p_id uuid)` — fetch BAST by id untuk halaman `/bast-sign/:id`
+- `submit_bast_signature(...)` — anti-double-submit endpoint untuk user submit ttd
 
 Constraint tambahan: unique index `laptops_serial_number_unique` pada kolom `serial_number` (mencegah duplicate auto-register).
 
@@ -313,6 +361,15 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 - [x] Alert laptop di luar kantor 7+ hari
 - [x] Hardware health monitoring (disk SMART, battery, RAM, crash detection)
 - [x] Auto-detect model, manufacturer, dan OS username dari agent (v1.0.7)
+- [x] Auto-detect SSD/HDD per disk fisik via Get-PhysicalDisk (v1.0.8)
+- [x] Tanda tangan digital BAP & BAST dengan signature pad
+- [x] Halaman publik tandatangan BAST oleh user (`/bast-sign/:id`) tanpa perlu login
+- [x] Halaman publik view & download PDF BAP (`/bap/:id`)
+- [x] Distribusi BAP/BAST via WhatsApp (template pesan + link signed URL)
+- [x] Pinjam Sekaligus (bulk BAST) untuk pinjam banyak laptop ke 1 tim
+- [x] Role Teknisi (3 orang teknisi bisa login, bikin/edit BAP sendiri)
+- [x] Reset TTD oleh admin kalau salah user yang ttd
+- [x] Dashboard card Berita Acara dengan filter periode (Per Bulan / Per Tahun)
 - [x] Audit log semua aktivitas
 - [x] Export CSV & cetak PDF
 - [x] Row Level Security (RLS)
