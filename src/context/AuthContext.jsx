@@ -66,12 +66,14 @@ export function AuthProvider({ children }) {
   }
 
   const isSuperAdmin = profile?.role === 'super_admin'
-  const isAdmin     = profile?.role === 'admin' || isSuperAdmin
-  const isStaff     = profile?.role === 'staff'
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User'
+  const isAdmin      = profile?.role === 'admin' || isSuperAdmin
+  const isStaff      = profile?.role === 'staff'
+  const isTeknisi    = isStaff // alias semantik: role 'staff' di DB = "Teknisi" di UI
+  const canCreateBAP = isAdmin || isTeknisi
+  const displayName  = profile?.full_name || user?.email?.split('@')[0] || 'User'
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isSuperAdmin, isAdmin, isStaff, displayName, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, isSuperAdmin, isAdmin, isStaff, isTeknisi, canCreateBAP, displayName, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )

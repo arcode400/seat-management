@@ -400,7 +400,7 @@ function fmtDate(d) {
 }
 
 export default function PeminjamanPage() {
-  const { isAdmin, isSuperAdmin } = useAuth()
+  const { isAdmin, isSuperAdmin, isTeknisi, canCreateBAP, user } = useAuth()
   const [tab, setTab]                   = useState('tersedia')
   const [riwayatFilter, setRiwayatFilter] = useState('semua')
   const [sortBy, setSortBy] = useState('tanggal') // 'tanggal' | 'nomor'
@@ -415,6 +415,7 @@ export default function PeminjamanPage() {
   const [kembalikanAsset, setKembalikanAsset] = useState(null)
   const [showBapModal, setShowBapModal] = useState(false)
   const [bapInitialSn, setBapInitialSn] = useState('')
+  const [pendingReturnAsset, setPendingReturnAsset] = useState(null)
   const [search, setSearch]             = useState('')
   const [refresh, setRefresh]           = useState(0)
   const [editingRiwayat, setEditingRiwayat] = useState(null)
@@ -546,15 +547,11 @@ export default function PeminjamanPage() {
   }
 
   async function doKembalikanDanBuat(asset) {
-    try {
-      await updateLaptop(asset.id, { status: 'available' })
-      setKembalikanAsset(null)
-      setBapInitialSn(asset.serial_number || '')
-      setShowBapModal(true)
-      setRefresh(r => r + 1)
-    } catch (err) {
-      alert(err.message)
-    }
+    // Buka form BAP dulu — laptop status diupdate di onCreated setelah BAP benar-benar tersimpan
+    setKembalikanAsset(null)
+    setBapInitialSn(asset.serial_number || '')
+    setPendingReturnAsset(asset)
+    setShowBapModal(true)
   }
 
   async function handleDeleteBast(id, nomor) {
@@ -710,7 +707,7 @@ export default function PeminjamanPage() {
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
                   <Download size={13} /> Export CSV
                 </button>
-                {isAdmin && (
+                {canCreateBAP && (
                   <button onClick={() => { setBapInitialSn(''); setShowBapModal(true) }}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white rounded-lg border-0 cursor-pointer whitespace-nowrap"
                     style={{ backgroundColor: '#0D47A1' }}
@@ -847,7 +844,7 @@ export default function PeminjamanPage() {
                                     <Printer size={12} /> Print BAST
                                   </button>
                                 )}
-                                {isAdmin && (
+                                {canCreateBAP && (
                                   <button onClick={() => setKembalikanAsset(a)}
                                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
                                     style={{ backgroundColor: '#FFF7ED', color: '#D97706' }}
@@ -956,7 +953,7 @@ export default function PeminjamanPage() {
                                     <RefreshCw size={12} /> Reset TTD
                                   </button>
                                 )}
-                                {isAdmin && (
+                                {(isAdmin || (isTeknisi && !isBast && r.created_by === user?.email)) && (
                                   <button
                                     onClick={() => setEditingRiwayat(r)}
                                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
@@ -1057,7 +1054,7 @@ export default function PeminjamanPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
               <h2 className="text-base font-semibold text-gray-800">Buat BA Pengembalian</h2>
-              <button onClick={() => { setShowBapModal(false); setBapInitialSn('') }}
+              <button onClick={() => { setShowBapModal(false); setBapInitialSn(''); setPendingReturnAsset(null) }}
                 className="p-2 rounded-lg border-0 bg-transparent cursor-pointer text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                 <X size={18} />
               </button>
@@ -1065,7 +1062,15 @@ export default function PeminjamanPage() {
             <div className="overflow-y-auto flex-1 px-6 py-5">
               <BeritaAcaraPengembalianForm
                 initialSn={bapInitialSn}
-                onCreated={() => { setShowBapModal(false); setBapInitialSn(''); setRefresh(r => r + 1) }}
+                onCreated={async () => {
+                  if (pendingReturnAsset?.id) {
+                    try { await updateLaptop(pendingReturnAsset.id, { status: 'available' }) } catch {}
+                  }
+                  setShowBapModal(false)
+                  setBapInitialSn('')
+                  setPendingReturnAsset(null)
+                  setRefresh(r => r + 1)
+                }}
               />
             </div>
           </div>

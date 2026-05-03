@@ -89,7 +89,7 @@ export default function App() {
             </h1>
             {isStaff && (
               <p className="text-xs text-amber-500 mt-0.5 m-0">
-                Mode Teknisi — bisa input issues & komplain, lihat aset & riwayat peminjaman
+                Mode Teknisi — bisa buat BAP pengembalian, input issues & komplain, lihat aset
               </p>
             )}
           </div>

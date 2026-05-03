@@ -9,7 +9,7 @@ export default function Topbar({ onMenuToggle }) {
   const initials = displayName.slice(0, 2).toUpperCase()
   const roleBadge = profile?.role === 'super_admin' ? { label: 'Super Admin', bg: '#FEF3C7', color: '#92400E' }
     : profile?.role === 'admin'                      ? { label: 'Admin',       bg: '#DBEAFE', color: '#1D4ED8' }
-    :                                                  { label: 'Staff',        bg: '#F3F4F6', color: '#6B7280' }
+    :                                                  { label: 'Teknisi',     bg: '#F3F4F6', color: '#6B7280' }
 
   async function handleLogout() {
     await signOut()
