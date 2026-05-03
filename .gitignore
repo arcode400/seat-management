@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Claude Code local config
+.claude/
+
 # Environment variables - jangan di-upload!
 .env
 .env.*
