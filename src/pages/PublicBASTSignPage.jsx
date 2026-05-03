@@ -109,8 +109,8 @@ export default function PublicBASTSignPage() {
             <div>
               <p className="text-sm font-bold text-amber-900 m-0">Cek dulu sebelum tanda tangan!</p>
               <p className="text-xs text-amber-700 mt-1 m-0">
-                Pastikan info laptop di bawah <strong>SAMA</strong> dengan laptop yang Anda pegang.
-                Cek <strong>Serial Number</strong> dan <strong>tipe laptop</strong> Anda.
+                Pastikan <strong>nama komputer</strong> di bawah <strong>SAMA</strong> dengan laptop yang Anda pegang.<br/>
+                <span className="text-amber-800">Cara cek: klik kanan <strong>This PC</strong> → Properties, atau Settings → System → About.</span>
               </p>
             </div>
           </div>

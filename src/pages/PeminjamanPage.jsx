@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil, MessageCircle, Link2, RefreshCw } from 'lucide-react'
+import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil, MessageCircle, Link2, RefreshCw, Layers } from 'lucide-react'
 import { shareBAPWhatsApp } from '../utils/shareBAPWhatsApp'
 import { supabase } from '../lib/supabase'
+import BulkBASTModal from '../components/BulkBASTModal'
 import { printReport } from '../utils/printReport'
 import { getAllLaptops, updateLaptop } from '../services/laptopService'
 import { getAllBeritaAcara, deleteBeritaAcara, updateBeritaAcara } from '../services/beritaAcaraService'
@@ -417,6 +418,9 @@ export default function PeminjamanPage() {
   const [search, setSearch]             = useState('')
   const [refresh, setRefresh]           = useState(0)
   const [editingRiwayat, setEditingRiwayat] = useState(null)
+  const [bulkMode, setBulkMode]         = useState(false)
+  const [bulkSelected, setBulkSelected] = useState(new Set())
+  const [showBulkModal, setShowBulkModal] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -623,6 +627,19 @@ export default function PeminjamanPage() {
             />
           </div>
 
+          {/* Bulk mode toggle for Tersedia tab */}
+          {tab === 'tersedia' && isAdmin && (
+            <button
+              onClick={() => { setBulkMode(b => !b); setBulkSelected(new Set()) }}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border cursor-pointer transition-colors whitespace-nowrap"
+              style={bulkMode
+                ? { borderColor: '#0D47A1', backgroundColor: '#EFF6FF', color: '#0D47A1' }
+                : { borderColor: '#E5E7EB', backgroundColor: 'white', color: '#374151' }}>
+              <Layers size={13} />
+              {bulkMode ? `Pilih Banyak Aktif (${bulkSelected.size})` : 'Pinjam Sekaligus'}
+            </button>
+          )}
+
           {/* Filter pills + period + export riwayat */}
           {tab === 'riwayat' && (
             <>
@@ -726,36 +743,66 @@ export default function PeminjamanPage() {
                 : <table className="w-full text-sm border-collapse">
                     <thead>
                       <tr className="bg-gray-50/50 border-b border-gray-100">
+                        {bulkMode && (
+                          <th className={thClass} style={{ width: 36 }}>
+                            <input type="checkbox"
+                              checked={bulkSelected.size === filteredAvailable.length && filteredAvailable.length > 0}
+                              onChange={e => {
+                                if (e.target.checked) setBulkSelected(new Set(filteredAvailable.map(a => a.id)))
+                                else setBulkSelected(new Set())
+                              }}
+                              className="cursor-pointer" />
+                          </th>
+                        )}
                         {['Tipe / Model','Serial Number','Kode Aset','Jenis','Lokasi',''].map(h => (
                           <th key={h} className={thClass}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredAvailable.map((a, i) => (
-                        <tr key={a.id} className="border-b border-gray-50 hover:bg-blue-50/20 transition-colors"
-                          style={{ backgroundColor: i % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                          <td className={tdClass}>
-                            <p className="font-semibold text-gray-800">{a.brand_type || '—'}</p>
-                            <p className="text-xs text-gray-400">{a.hostname || ''}</p>
-                          </td>
-                          <td className={`${tdClass} font-mono text-xs text-gray-500`}>{a.serial_number || '—'}</td>
-                          <td className={`${tdClass} font-mono text-xs text-gray-500`}>{a.asset_code || '—'}</td>
-                          <td className={`${tdClass} text-gray-500 text-xs`}>{a.device_type || '—'}</td>
-                          <td className={`${tdClass} text-gray-500 text-xs`}>{a.location || '—'}</td>
-                          <td className={tdClass}>
-                            {isAdmin && (
-                              <button onClick={() => setModalAsset(a)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg border-0 cursor-pointer whitespace-nowrap"
-                                style={{ backgroundColor: '#0D47A1' }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1565C0'}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0D47A1'}>
-                                <FileText size={12} /> Pinjamkan
-                              </button>
+                      {filteredAvailable.map((a, i) => {
+                        const checked = bulkSelected.has(a.id)
+                        function toggleSelect() {
+                          setBulkSelected(prev => {
+                            const next = new Set(prev)
+                            if (next.has(a.id)) next.delete(a.id)
+                            else next.add(a.id)
+                            return next
+                          })
+                        }
+                        return (
+                          <tr key={a.id} className="border-b border-gray-50 hover:bg-blue-50/20 transition-colors"
+                            style={{ backgroundColor: checked ? '#EFF6FF' : (i % 2 === 0 ? 'white' : '#FAFAFA'), cursor: bulkMode ? 'pointer' : 'default' }}
+                            onClick={() => bulkMode && toggleSelect()}>
+                            {bulkMode && (
+                              <td className={tdClass}>
+                                <input type="checkbox" checked={checked} onChange={toggleSelect}
+                                  onClick={e => e.stopPropagation()}
+                                  className="cursor-pointer" />
+                              </td>
                             )}
-                          </td>
-                        </tr>
-                      ))}
+                            <td className={tdClass}>
+                              <p className="font-semibold text-gray-800">{a.brand_type || '—'}</p>
+                              <p className="text-xs text-gray-400">{a.hostname || ''}</p>
+                            </td>
+                            <td className={`${tdClass} font-mono text-xs text-gray-500`}>{a.serial_number || '—'}</td>
+                            <td className={`${tdClass} font-mono text-xs text-gray-500`}>{a.asset_code || '—'}</td>
+                            <td className={`${tdClass} text-gray-500 text-xs`}>{a.device_type || '—'}</td>
+                            <td className={`${tdClass} text-gray-500 text-xs`}>{a.location || '—'}</td>
+                            <td className={tdClass}>
+                              {!bulkMode && isAdmin && (
+                                <button onClick={() => setModalAsset(a)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg border-0 cursor-pointer whitespace-nowrap"
+                                  style={{ backgroundColor: '#0D47A1' }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1565C0'}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0D47A1'}>
+                                  <FileText size={12} /> Pinjamkan
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
             )}
@@ -941,6 +988,38 @@ export default function PeminjamanPage() {
           </div>
         )}
       </div>
+
+      {/* Floating action bar — Bulk Mode */}
+      {bulkMode && bulkSelected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white rounded-full shadow-lg border border-gray-200 px-5 py-3 flex items-center gap-4">
+          <span className="text-sm text-gray-700">
+            <strong>{bulkSelected.size}</strong> laptop dipilih
+          </span>
+          <button onClick={() => setBulkSelected(new Set())}
+            className="text-xs text-gray-500 underline cursor-pointer border-0 bg-transparent">
+            Reset
+          </button>
+          <button onClick={() => setShowBulkModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white rounded-full border-0 cursor-pointer transition-colors"
+            style={{ backgroundColor: '#0D47A1' }}>
+            <FileText size={14} /> Buat {bulkSelected.size} BAST
+          </button>
+        </div>
+      )}
+
+      {/* Modal: Bulk BAST */}
+      {showBulkModal && (
+        <BulkBASTModal
+          assets={assets.filter(a => bulkSelected.has(a.id))}
+          onClose={() => setShowBulkModal(false)}
+          onSuccess={() => {
+            setShowBulkModal(false)
+            setBulkMode(false)
+            setBulkSelected(new Set())
+            setRefresh(r => r + 1)
+          }}
+        />
+      )}
 
       {/* Modal: Konfirmasi kembalikan */}
       {kembalikanAsset && (
