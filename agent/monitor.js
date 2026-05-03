@@ -64,12 +64,13 @@ function getSpecs() {
         .match(/TotalPhysicalMemory=(\d+)/i)?.[1]
       const ram_gb = ramRaw ? Math.round(parseInt(ramRaw) / 1073741824) : null
 
-      // Detail logical drive (C:, D:, dst) — dipakai di dashboard
-      const logicalOut = execSync('wmic logicaldisk where "DriveType=3" get DeviceID,Size,FreeSpace /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
+      // Baca semua drive lokal (SSD + HDD)
+      const diskOut = execSync('wmic logicaldisk where "DriveType=3" get DeviceID,Size,FreeSpace /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
+      const blocks = diskOut.trim().split(/\n\s*\n/)
       const driveList = []
       let storage_gb = 0
       let storage_free_gb = 0
-      for (const block of logicalOut.trim().split(/\n\s*\n/)) {
+      for (const block of blocks) {
         const deviceId = block.match(/DeviceID=(.+)/i)?.[1]?.trim()
         const size     = block.match(/Size=(\d+)/i)?.[1]
         const free     = block.match(/FreeSpace=(\d+)/i)?.[1]
