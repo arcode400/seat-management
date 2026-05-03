@@ -117,7 +117,8 @@ export function printBeritaAcara(ba) {
     }
     .ttd-box { width: 45%; text-align: center; }
     .ttd-box .ttd-label { font-weight: bold; margin-bottom: 1px; }
-    .ttd-space { height: 80px; }
+    .ttd-space { height: 80px; display: flex; align-items: center; justify-content: center; }
+    .ttd-space img { max-height: 80px; max-width: 100%; object-fit: contain; }
     .ttd-name {
       font-weight: bold;
       border-top: 1px solid #000;
@@ -261,16 +262,16 @@ export function printBeritaAcara(ba) {
   <div class="ttd-row">
     <div class="ttd-box">
       <div class="ttd-label">PIHAK KEDUA</div>
-      <div class="ttd-space"></div>
+      <div class="ttd-space">${ba.signature_penerima ? `<img src="${ba.signature_penerima}" alt="ttd"/>` : ''}</div>
       <div>
-        <span class="ttd-name">( ${ba.penerima_nama ?? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</span>
+        <span class="ttd-name">${ba.penerima_nama ? `( ${ba.penerima_nama} )` : '&nbsp;'}</span>
       </div>
     </div>
     <div class="ttd-box">
       <div class="ttd-label">PIHAK PERTAMA</div>
       <div class="ttd-space"></div>
       <div>
-        <span class="ttd-name">( ${ba.penyerah_nama ?? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</span>
+        <span class="ttd-name">${ba.penyerah_nama ? `( ${ba.penyerah_nama} )` : '&nbsp;'}</span>
       </div>
     </div>
   </div>

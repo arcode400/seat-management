@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil, MessageCircle } from 'lucide-react'
+import { Printer, RotateCcw, PackageCheck, Clock, FileText, Trash2, Search, X, Plus, History, Download, FileDown, Pencil, MessageCircle, Link2, RefreshCw } from 'lucide-react'
 import { shareBAPWhatsApp } from '../utils/shareBAPWhatsApp'
+import { supabase } from '../lib/supabase'
 import { printReport } from '../utils/printReport'
 import { getAllLaptops, updateLaptop } from '../services/laptopService'
 import { getAllBeritaAcara, deleteBeritaAcara, updateBeritaAcara } from '../services/beritaAcaraService'
@@ -41,6 +42,54 @@ function KondisiBadge({ unit }) {
       {unit || 'Normal'}
     </span>
   )
+}
+
+function SignStatusBadge({ signed, hasName }) {
+  if (signed) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+        style={{ backgroundColor: '#DCFCE7', color: '#16A34A' }}>
+        ✓ Signed
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+      style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
+      ⏳ {hasName ? 'Belum TTD' : 'Pending'}
+    </span>
+  )
+}
+
+async function copyBastSignLink(id) {
+  const link = `${window.location.origin}/bast-sign/${id}`
+  try {
+    await navigator.clipboard.writeText(link)
+    alert(`Link sign disalin ke clipboard:\n${link}\n\nKirim link ini ke user via WA / chat.`)
+  } catch {
+    prompt('Copy link sign berikut:', link)
+  }
+}
+
+async function resetBastSignature(id, nomor, onDone) {
+  if (!confirm(`Reset tanda tangan BAST "${nomor || '—'}"?\n\nNama, jabatan, NIP, unit, dan tanda tangan akan dihapus. User bisa diundang ulang via Copy Link Sign.`)) return
+  try {
+    const { error } = await supabase
+      .from('berita_acara')
+      .update({
+        penerima_nama: null,
+        penerima_nip: null,
+        penerima_jabatan: null,
+        penerima_unit: null,
+        signature_penerima: null,
+        signed_at_penerima: null,
+      })
+      .eq('id', id)
+    if (error) throw error
+    onDone?.()
+  } catch (err) {
+    alert(`Gagal reset: ${err.message}`)
+  }
 }
 
 function KembalikanModal({ asset, bastList, bapList, onClose, onKembalikan, onKembalikanDanBuat }) {
@@ -141,9 +190,17 @@ function RiwayatEditModal({ item, onClose, onSaved }) {
     penerima_unit:       item.penerima_unit || '',
     penerima_jabatan:    item.penerima_jabatan || '',
     hostname:            item.hostname || '',
+    spek_layar:          item.spek_layar || '',
+    spek_processor:      item.spek_processor || '',
+    spek_ram:            item.spek_ram || '',
+    spek_storage:        item.spek_storage || '',
+    kondisi_perangkat:   item.kondisi_perangkat || 'Baik',
+    teknisi:             item.teknisi || '',
+    keterangan:          item.keterangan || '',
     // BAP
     pengembalian_nama:   item.pengembalian_nama || '',
     pengembalian_jabatan: item.pengembalian_jabatan || '',
+    pengembalian_phone:  item.pengembalian_phone || '',
     kondisi_unit:        item.kondisi_unit || 'Normal',
   })
   const [saving, setSaving] = useState(false)
@@ -158,19 +215,24 @@ function RiwayatEditModal({ item, onClose, onSaved }) {
     try {
       if (isBast) {
         const fields = {
-          nomor_ba: form.nomor_ba, tanggal: form.tanggal,
+          nomor_ba: form.nomor_ba?.trim() || null, tanggal: form.tanggal,
           nama_perangkat: form.nama_perangkat, serial_number: form.serial_number,
           hostname: form.hostname,
           penerima_nama: form.penerima_nama, penerima_nip: form.penerima_nip,
           penerima_unit: form.penerima_unit, penerima_jabatan: form.penerima_jabatan,
+          spek_layar: form.spek_layar, spek_processor: form.spek_processor,
+          spek_ram: form.spek_ram, spek_storage: form.spek_storage,
+          kondisi_perangkat: form.kondisi_perangkat,
+          teknisi: form.teknisi, keterangan: form.keterangan,
         }
         await updateBeritaAcara(item.id, fields)
       } else {
         const fields = {
-          nomor_ba: form.nomor_ba, tanggal: form.tanggal,
+          nomor_ba: form.nomor_ba?.trim() || null, tanggal: form.tanggal,
           nama_perangkat: form.nama_perangkat, serial_number: form.serial_number,
           pengembalian_nama: form.pengembalian_nama,
           pengembalian_jabatan: form.pengembalian_jabatan,
+          pengembalian_phone: form.pengembalian_phone,
           kondisi_unit: form.kondisi_unit,
         }
         await updateBAP(item.id, fields)
@@ -245,6 +307,46 @@ function RiwayatEditModal({ item, onClose, onSaved }) {
                   <input name="penerima_jabatan" value={form.penerima_jabatan} onChange={handleChange} className={inputClass} />
                 </div>
               </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Spesifikasi Perangkat</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Layar</label>
+                    <input name="spek_layar" value={form.spek_layar} onChange={handleChange} className={inputClass} placeholder="14 inch" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Processor</label>
+                    <input name="spek_processor" value={form.spek_processor} onChange={handleChange} className={inputClass} placeholder="Intel Core i7" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>RAM</label>
+                    <input name="spek_ram" value={form.spek_ram} onChange={handleChange} className={inputClass} placeholder="16 GB" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Storage</label>
+                    <input name="spek_storage" value={form.spek_storage} onChange={handleChange} className={inputClass} placeholder="SSD 512 GB" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Kondisi Perangkat</label>
+                  <select name="kondisi_perangkat" value={form.kondisi_perangkat} onChange={handleChange} className={`${inputClass} cursor-pointer`}>
+                    {['Baik','Cukup Baik','Rusak Ringan','Rusak Berat'].map(k => <option key={k}>{k}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Teknisi</label>
+                  <input name="teknisi" value={form.teknisi} onChange={handleChange} className={inputClass} placeholder="Nama teknisi" />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Keterangan Tambahan</label>
+                <input name="keterangan" value={form.keterangan} onChange={handleChange} className={inputClass} placeholder="Lengkap dengan charger, tas, dll." />
+              </div>
             </>
           ) : (
             <>
@@ -257,6 +359,10 @@ function RiwayatEditModal({ item, onClose, onSaved }) {
                   <label className={labelClass}>Jabatan</label>
                   <input name="pengembalian_jabatan" value={form.pengembalian_jabatan} onChange={handleChange} className={inputClass} />
                 </div>
+              </div>
+              <div>
+                <label className={labelClass}>No. WhatsApp (untuk kirim BAP via WA)</label>
+                <input name="pengembalian_phone" value={form.pengembalian_phone} onChange={handleChange} className={inputClass} placeholder="0812-3456-7890" />
               </div>
               <div>
                 <label className={labelClass}>Kondisi Unit</label>
@@ -750,8 +856,11 @@ export default function PeminjamanPage() {
                             <td className={tdClass}>
                               {isBast ? (
                                 <>
-                                  <p className="font-medium text-gray-800">{r.penerima_nama || '—'}</p>
-                                  <p className="text-xs text-gray-400">{r.penerima_unit || r.penerima_nip || ''}</p>
+                                  <p className="font-medium text-gray-800">{r.penerima_nama || <span className="text-gray-300">— belum diisi —</span>}</p>
+                                  <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                                    {r.penerima_unit || r.penerima_nip || ''}
+                                    <SignStatusBadge signed={!!r.signature_penerima} hasName={!!r.penerima_nama} />
+                                  </p>
                                 </>
                               ) : (
                                 <>
@@ -778,6 +887,26 @@ export default function PeminjamanPage() {
                                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFCE7'}
                                     onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F0FDF4'}>
                                     <MessageCircle size={12} /> WA
+                                  </button>
+                                )}
+                                {isBast && (
+                                  <button
+                                    onClick={() => copyBastSignLink(r.id)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                                    style={{ backgroundColor: '#F0FDF4', color: '#16A34A' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFCE7'}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F0FDF4'}>
+                                    <Link2 size={12} /> Copy Link Sign
+                                  </button>
+                                )}
+                                {isBast && isAdmin && r.signature_penerima && (
+                                  <button
+                                    onClick={() => resetBastSignature(r.id, r.nomor_ba, () => setRefresh(x => x + 1))}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                                    style={{ backgroundColor: '#FEF2F2', color: '#DC2626' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FEE2E2'}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FEF2F2'}>
+                                    <RefreshCw size={12} /> Reset TTD
                                   </button>
                                 )}
                                 {isAdmin && (

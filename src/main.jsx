@@ -6,6 +6,7 @@ import App from './App.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LandingPage from './pages/LandingPage.jsx'
 import PublicBAPPage from './pages/PublicBAPPage.jsx'
+import PublicBASTSignPage from './pages/PublicBASTSignPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/bap/:id" element={<PublicBAPPage />} />
+          <Route path="/bast-sign/:id" element={<PublicBASTSignPage />} />
           <Route
             path="/dashboard"
             element={

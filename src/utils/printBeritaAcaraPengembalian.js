@@ -231,14 +231,14 @@ export function printBeritaAcaraPengembalian(bap) {
       <div class="ttd-label">PIHAK KEDUA</div>
       <div class="ttd-space"></div>
       <div>
-        <span class="ttd-name">( ${bap.penerima_nama ?? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</span>
+        <span class="ttd-name">${bap.penerima_nama ? `( ${bap.penerima_nama} )` : '&nbsp;'}</span>
       </div>
     </div>
     <div class="ttd-box">
       <div class="ttd-label">PIHAK PERTAMA</div>
       <div class="ttd-space">${bap.signature_pengembalian ? `<img src="${bap.signature_pengembalian}" alt="ttd"/>` : ''}</div>
       <div>
-        <span class="ttd-name">( ${bap.pengembalian_nama ?? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</span>
+        <span class="ttd-name">${bap.pengembalian_nama ? `( ${bap.pengembalian_nama} )` : '&nbsp;'}</span>
       </div>
     </div>
   </div>

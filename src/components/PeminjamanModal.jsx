@@ -4,6 +4,7 @@ import { createBeritaAcara } from '../services/beritaAcaraService'
 import { updateLaptop } from '../services/laptopService'
 import { printBeritaAcara } from '../utils/printBeritaAcara'
 import { useAuth } from '../context/AuthContext'
+import SignaturePad from './SignaturePad'
 
 const inputClass = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none transition-colors'
 const focus = {
@@ -28,9 +29,9 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
     kondisi_perangkat:'Baik',
     nama_perangkat:   asset.brand_type || '',
     spek_layar:       '',
-    spek_processor:   '',
-    spek_ram:         '',
-    spek_storage:     '',
+    spek_processor:   asset.cpu || '',
+    spek_ram:         asset.ram_gb ? `${asset.ram_gb} GB` : '',
+    spek_storage:     asset.storage_gb ? `${asset.storage_gb} GB` : '',
     teknisi:          '',
     keterangan:       '',
     penyerah_nama:    'FAJAR AJI NUGROHO',
@@ -40,6 +41,7 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
     penerima_nip:     asset.nip || '',
     penerima_jabatan: '',
     penerima_unit:    asset.unit || '',
+    signature_penerima: null,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
@@ -51,7 +53,6 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.penerima_nama) { setError('Nama peminjam wajib diisi.'); return }
     setSaving(true)
     setError(null)
     try {
@@ -63,6 +64,7 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
         hostname:      asset.hostname || '',
         kode_aset:     asset.asset_code || '',
         created_by:    user?.email ?? '',
+        signed_at_penerima: form.signature_penerima ? new Date().toISOString() : null,
       }
       const bast = await createBeritaAcara(payload)
       await updateLaptop(asset.id, { status: 'in_use' })
@@ -208,9 +210,9 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Pihak Kedua (Peminjam)</p>
               <div className="space-y-3">
                 <div>
-                  <Label required>Nama</Label>
+                  <Label>Nama</Label>
                   <input name="penerima_nama" value={form.penerima_nama} onChange={handleChange}
-                    placeholder="Nama peminjam" className={inputClass} {...focus} />
+                    placeholder="Nama peminjam (opsional, bisa diisi user via link tanda tangan)" className={inputClass} {...focus} />
                 </div>
                 <div>
                   <Label>NIP</Label>
@@ -227,6 +229,11 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
                   <input name="penerima_unit" value={form.penerima_unit} onChange={handleChange}
                     placeholder="Unit kerja" className={inputClass} {...focus} />
                 </div>
+                <SignaturePad
+                  label="Tanda Tangan Peminjam (Opsional)"
+                  value={form.signature_penerima}
+                  onChange={sig => setForm(f => ({ ...f, signature_penerima: sig }))}
+                />
               </div>
             </div>
           </div>
