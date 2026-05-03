@@ -31,7 +31,7 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
     spek_layar:       '',
     spek_processor:   asset.cpu || '',
     spek_ram:         asset.ram_gb ? `${asset.ram_gb} GB` : '',
-    spek_storage:     asset.storage_gb ? `${asset.storage_gb} GB` : '',
+    spek_storage:     asset.storage_summary || (asset.storage_gb ? `${asset.storage_gb} GB` : ''),
     teknisi:          '',
     keterangan:       '',
     penyerah_nama:    'FAJAR AJI NUGROHO',

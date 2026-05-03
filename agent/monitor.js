@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.7'
+const CURRENT_VERSION = '1.0.8'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -64,13 +64,12 @@ function getSpecs() {
         .match(/TotalPhysicalMemory=(\d+)/i)?.[1]
       const ram_gb = ramRaw ? Math.round(parseInt(ramRaw) / 1073741824) : null
 
-      // Baca semua drive lokal (SSD + HDD)
-      const diskOut = execSync('wmic logicaldisk where "DriveType=3" get DeviceID,Size,FreeSpace /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
-      const blocks = diskOut.trim().split(/\n\s*\n/)
+      // Detail logical drive (C:, D:, dst) — dipakai di dashboard
+      const logicalOut = execSync('wmic logicaldisk where "DriveType=3" get DeviceID,Size,FreeSpace /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
       const driveList = []
       let storage_gb = 0
       let storage_free_gb = 0
-      for (const block of blocks) {
+      for (const block of logicalOut.trim().split(/\n\s*\n/)) {
         const deviceId = block.match(/DeviceID=(.+)/i)?.[1]?.trim()
         const size     = block.match(/Size=(\d+)/i)?.[1]
         const free     = block.match(/FreeSpace=(\d+)/i)?.[1]
@@ -82,6 +81,29 @@ function getSpecs() {
         storage_free_gb += freeGb
       }
       const storage_info = driveList.join(' | ') || null
+
+      // Summary disk fisik SSD/HDD via Get-PhysicalDisk — dipakai di form BAST
+      let storage_summary = null
+      try {
+        const psOut = execSync(
+          `powershell -NonInteractive -Command "Get-PhysicalDisk | Select-Object MediaType,Size | ConvertTo-Json -Compress"`,
+          { encoding: 'utf8', timeout: 12000, windowsHide: true }
+        ).trim()
+        if (psOut) {
+          const parsed = JSON.parse(psOut)
+          const disks = Array.isArray(parsed) ? parsed : [parsed]
+          const summary = []
+          for (const d of disks) {
+            if (!d?.Size) continue
+            const sizeGb = Math.round(parseInt(d.Size) / 1073741824)
+            if (sizeGb < 1) continue
+            const type = (d.MediaType || '').toString().trim()
+            const label = (type === 'SSD' || type === 'HDD') ? type : 'Disk'
+            summary.push(`${label} ${sizeGb} GB`)
+          }
+          storage_summary = summary.join(' + ') || null
+        }
+      } catch {}
 
       const os_name = execSync('wmic os get caption /value', { encoding: 'utf8', timeout: 10000, windowsHide: true })
         .match(/Caption=(.+)/i)?.[1]?.trim() ?? null
@@ -107,7 +129,7 @@ function getSpecs() {
 
       const os_username = os.userInfo().username
 
-      return { cpu, ram_gb, storage_gb, storage_free_gb, storage_info, os_name, serial_number, model, manufacturer, os_username }
+      return { cpu, ram_gb, storage_gb, storage_free_gb, storage_info, storage_summary, os_name, serial_number, model, manufacturer, os_username }
     } else {
       const cpu = execSync('sysctl -n machdep.cpu.brand_string', { encoding: 'utf8', timeout: 5000 }).trim() || null
 

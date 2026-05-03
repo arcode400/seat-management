@@ -64,7 +64,7 @@ export default function BulkBASTModal({ assets, onClose, onSuccess }) {
           spek_layar:        '',
           spek_processor:    asset.cpu || '',
           spek_ram:          asset.ram_gb ? `${asset.ram_gb} GB` : '',
-          spek_storage:      asset.storage_gb ? `${asset.storage_gb} GB` : '',
+          spek_storage:      asset.storage_summary || (asset.storage_gb ? `${asset.storage_gb} GB` : ''),
           teknisi:           form.teknisi,
           keterangan:        form.keterangan || `Pinjaman tim — PJ: ${form.pj_nama}`,
           penyerah_nama:     'FAJAR AJI NUGROHO',

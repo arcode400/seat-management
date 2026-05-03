@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff } from 'lucide-react'
+import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileText, RotateCcw, AlertCircle, Edit3 } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
+import { getAllBeritaAcara } from '../services/beritaAcaraService'
+import { getAllBAP } from '../services/beritaAcaraPengembalianService'
 
 const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
 
@@ -33,8 +35,15 @@ export default function DashboardCards() {
   const [stats, setStats] = useState({
     total: 0, online: 0, offline: 0,
     normal: 0, perbaikan: 0, dipinjam: 0, tidakAktif: 0,
+    bastBulan: 0, bastPending: 0, bapBulan: 0, bapSigned: 0,
   })
-  const [loading, setLoading] = useState(true)
+  const [bastList, setBastList] = useState([])
+  const [bapList, setBapList]   = useState([])
+  const [loading, setLoading]   = useState(true)
+  const today = new Date()
+  const [periodMode, setPeriodMode] = useState('bulan') // 'bulan' | 'tahun'
+  const [periodYear, setPeriodYear]   = useState(today.getFullYear())
+  const [periodMonth, setPeriodMonth] = useState(today.getMonth())
 
   useEffect(() => {
     fetchStats()
@@ -44,13 +53,21 @@ export default function DashboardCards() {
 
   async function fetchStats() {
     try {
-      const laptops = await getAllLaptops()
+      const [laptops, bastList, bapList] = await Promise.all([
+        getAllLaptops(),
+        getAllBeritaAcara().catch(() => []),
+        getAllBAP().catch(() => []),
+      ])
       const now = Date.now()
       const online = laptops.filter(
         l => l.last_seen && now - toUTC(l.last_seen).getTime() < OFFLINE_THRESHOLD_MS
       ).length
 
-      setStats({
+      setBastList(bastList)
+      setBapList(bapList)
+
+      setStats(s => ({
+        ...s,
         total:     laptops.length,
         online,
         offline:   laptops.length - online,
@@ -58,7 +75,7 @@ export default function DashboardCards() {
         perbaikan: laptops.filter(l => l.status === 'maintenance').length,
         dipinjam:  laptops.filter(l => l.status === 'in_use').length,
         tidakAktif: laptops.filter(l => l.status === 'rusak').length,
-      })
+      }))
     } catch (err) {
       console.error(err)
     } finally {
@@ -68,6 +85,38 @@ export default function DashboardCards() {
 
   const { total } = stats
   const pct = (n) => total > 0 ? `${((n / total) * 100).toFixed(1)}% dari total` : '—'
+
+  const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+
+  const matchPeriod = (dateStr) => {
+    if (!dateStr) return false
+    const d = new Date(dateStr)
+    if (d.getFullYear() !== periodYear) return false
+    if (periodMode === 'bulan' && d.getMonth() !== periodMonth) return false
+    return true
+  }
+
+  const bastFiltered = bastList.filter(b => matchPeriod(b.tanggal || b.created_at))
+  const bapFiltered  = bapList.filter(b => matchPeriod(b.tanggal || b.created_at))
+
+  const baStats = {
+    bastBulan:   bastFiltered.length,
+    bastPending: bastFiltered.filter(b => !b.signature_penerima).length,
+    bapBulan:    bapFiltered.length,
+    bapSigned:   bapFiltered.filter(b => !!b.signature_pengembalian).length,
+  }
+
+  const periodLabel = periodMode === 'tahun'
+    ? `Tahun ${periodYear}`
+    : `${MONTHS[periodMonth]} ${periodYear}`
+
+  const currentYear = today.getFullYear()
+  const availableYears = [...new Set([
+    ...bastList.map(b => new Date(b.tanggal || b.created_at).getFullYear()),
+    ...bapList.map(b => new Date(b.tanggal || b.created_at).getFullYear()),
+    // Default 5 tahun ke belakang biar bisa lihat history kosong
+    currentYear, currentYear - 1, currentYear - 2, currentYear - 3, currentYear - 4,
+  ])].filter(y => !isNaN(y)).sort((a, b) => b - a)
 
   return (
     <div className="space-y-4 mb-6">
@@ -108,6 +157,53 @@ export default function DashboardCards() {
           <StatCard label="Tidak Aktif" value={stats.tidakAktif}
             subtitle={pct(stats.tidakAktif)}
             icon={PowerOff} iconBg="#F3F4F6" iconColor="#6B7280" loading={loading} />
+        </div>
+      </div>
+
+      {/* Row 3: Berita Acara — periode bisa dipilih */}
+      <div>
+        <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
+            Berita Acara — {periodLabel}
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs">
+              {['bulan', 'tahun'].map(m => (
+                <button key={m} onClick={() => setPeriodMode(m)}
+                  className="px-3 py-1.5 border-0 cursor-pointer transition-colors capitalize"
+                  style={{
+                    backgroundColor: periodMode === m ? '#0D47A1' : 'white',
+                    color:           periodMode === m ? 'white'   : '#6B7280',
+                  }}>
+                  {m === 'bulan' ? 'Per Bulan' : 'Per Tahun'}
+                </button>
+              ))}
+            </div>
+            {periodMode === 'bulan' && (
+              <select value={periodMonth} onChange={e => setPeriodMonth(parseInt(e.target.value))}
+                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white cursor-pointer focus:outline-none">
+                {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+              </select>
+            )}
+            <select value={periodYear} onChange={e => setPeriodYear(parseInt(e.target.value))}
+              className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white cursor-pointer focus:outline-none">
+              {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="BAST Dibuat" value={baStats.bastBulan}
+            subtitle={`Serah Terima ${periodLabel.toLowerCase()}`}
+            icon={FileText} iconBg="#DBEAFE" iconColor="#1D4ED8" loading={loading} />
+          <StatCard label="BAST Pending TTD" value={baStats.bastPending}
+            subtitle={baStats.bastBulan > 0 ? `${baStats.bastBulan - baStats.bastPending} sudah signed` : '—'}
+            icon={Edit3} iconBg="#FEF3C7" iconColor="#D97706" loading={loading} />
+          <StatCard label="BAP Dibuat" value={baStats.bapBulan}
+            subtitle={`Pengembalian ${periodLabel.toLowerCase()}`}
+            icon={RotateCcw} iconBg="#FFF7ED" iconColor="#D97706" loading={loading} />
+          <StatCard label="BAP Signed" value={baStats.bapSigned}
+            subtitle={baStats.bapBulan > 0 ? `${baStats.bapBulan - baStats.bapSigned} belum signed` : '—'}
+            icon={CheckCircle} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
         </div>
       </div>
     </div>
