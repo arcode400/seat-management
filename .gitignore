@@ -15,6 +15,11 @@ dist-ssr
 # Claude Code local config
 .claude/
 
+# Archive files (gak perlu di-track)
+*.rar
+*.zip
+*.7z
+
 # Environment variables - jangan di-upload!
 .env
 .env.*
