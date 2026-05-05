@@ -70,7 +70,22 @@ export default function DashboardCharts() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       {/* Pie */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <p className="text-sm font-semibold text-gray-700 mb-1 m-0">Status Laptop</p>
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-sm font-semibold text-gray-700 m-0">Status Laptop</p>
+          <span
+            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold cursor-help select-none"
+            style={{ backgroundColor: '#E5E7EB', color: '#6B7280' }}
+            title={
+              'Cara baca:\n' +
+              '• In Use = laptop yang sedang dipinjam (status in_use), terlepas online/offline.\n' +
+              '• Online = laptop tersedia (bukan dipinjam) yang aktif ping < 3 menit.\n' +
+              '• Offline = sisanya.\n\n' +
+              'Catatan: angka Online di card atas (Monitoring Jaringan) menggabungkan semua laptop yang aktif ping, termasuk yang sedang dipinjam. Jadi Online di card biasanya lebih besar dari Online di donut.'
+            }
+          >
+            i
+          </span>
+        </div>
         <p className="text-xs text-gray-400 mb-4 m-0">Distribusi status saat ini</p>
         {loading ? (
           <div className="h-48 flex items-center justify-center">
