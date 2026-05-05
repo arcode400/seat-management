@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { getAllLaptops } from '../services/laptopService'
 import { getActivityLast7Days } from '../services/transactionService'
+import InfoTooltip from './InfoTooltip'
 
 const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
 
