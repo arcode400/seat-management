@@ -3,6 +3,7 @@ import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileTe
 import { getAllLaptops } from '../services/laptopService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
 import { getAllBAP } from '../services/beritaAcaraPengembalianService'
+import InfoTooltip from './InfoTooltip'
 
 const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
 
@@ -127,17 +128,13 @@ export default function DashboardCards() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
             Monitoring Jaringan
           </p>
-          <span
-            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold cursor-help select-none"
-            style={{ backgroundColor: '#E5E7EB', color: '#6B7280' }}
-            title={
-              'Online = laptop yang ping ke server < 3 menit terakhir, termasuk yang sedang dipinjam (in_use).\n' +
+          <InfoTooltip
+            text={
+              'Online = laptop yang ping ke server < 3 menit terakhir, termasuk yang sedang dipinjam (in_use).\n\n' +
               'Offline = sisanya.\n\n' +
               'Beda dengan donut "Status Laptop" di bawah, yang misahin In Use sebagai kategori sendiri.'
             }
-          >
-            i
-          </span>
+          />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard label="Total Perangkat" value={stats.total}
