@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Save, User, Briefcase, PenTool, RotateCcw } from 'lucide-react'
+import { Save, User, Briefcase, PenTool, RotateCcw, Upload } from 'lucide-react'
 import { getAppConfig, updateAppConfig } from '../services/appConfigService'
-import SignaturePad from '../components/SignaturePad'
 
 export default function SettingsPage() {
   const [form, setForm] = useState({
@@ -123,15 +122,37 @@ export default function SettingsPage() {
                 />
               </div>
             ) : (
-              <SignaturePad
-                label=""
-                height={160}
-                value={form.default_pihak_it_signature}
-                onChange={sig => handleChange('default_pihak_it_signature', sig)}
-              />
+              <label
+                className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-sm font-medium rounded-lg border-2 border-dashed cursor-pointer transition-colors"
+                style={{ borderColor: '#D1D5DB', color: '#374151', backgroundColor: '#F9FAFB' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F3F4F6'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+              >
+                <Upload size={20} className="text-gray-400" />
+                <span>Pilih file tanda tangan</span>
+                <span className="text-xs text-gray-400 font-normal">PNG / JPG · max 2MB</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    if (file.size > 2 * 1024 * 1024) {
+                      setError('Ukuran file maksimal 2MB.')
+                      return
+                    }
+                    const reader = new FileReader()
+                    reader.onload = () => handleChange('default_pihak_it_signature', reader.result)
+                    reader.onerror = () => setError('Gagal membaca file.')
+                    reader.readAsDataURL(file)
+                    e.target.value = ''
+                  }}
+                />
+              </label>
             )}
             <p className="text-xs text-gray-400 mt-1.5">
-              Tanda tangan disimpan sebagai gambar di database. Bisa diganti / dihapus kapan saja oleh super admin.
+              Disarankan pakai PNG dengan background transparan/putih agar tampil bersih di PDF. Bisa diganti kapan saja oleh super admin.
             </p>
           </div>
         </div>
