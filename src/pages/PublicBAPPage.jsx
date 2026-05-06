@@ -86,6 +86,38 @@ export default function PublicBAPPage() {
           </div>
         </div>
 
+        {/* Syarat & Ketentuan yang sudah disetujui */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4"
+          style={{ borderColor: '#FCD34D', borderWidth: 1, backgroundColor: '#FFFBEB' }}>
+          <p className="text-xs font-bold uppercase tracking-wide m-0 mb-2" style={{ color: '#92400E' }}>
+            Syarat & Ketentuan yang Telah Disetujui
+          </p>
+          <p className="text-xs text-amber-900 m-0 mb-2">
+            Saya yang bertanda tangan pada Berita Acara ini menyatakan sehubungan dengan pengembalian laptop:
+          </p>
+          <div className="bg-white rounded-md p-3 mb-3 text-xs space-y-1">
+            <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Hostname</span><span className="text-gray-400 px-1">:</span><span className="font-mono font-medium text-gray-800">{bap.hostname || '—'}</span></div>
+            <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Serial Number</span><span className="text-gray-400 px-1">:</span><span className="font-mono font-medium text-gray-800">{bap.serial_number || '—'}</span></div>
+            <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Kode Aset</span><span className="text-gray-400 px-1">:</span><span className="font-mono font-medium text-gray-800">{bap.kode_aset || '—'}</span></div>
+            <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Nama / Tipe</span><span className="text-gray-400 px-1">:</span><span className="font-medium text-gray-800">{bap.nama_perangkat || '—'}</span></div>
+          </div>
+          <p className="text-xs text-amber-900 m-0 mb-2">bahwa:</p>
+          <ol className="text-xs text-amber-900 m-0 pl-5 space-y-1.5 list-decimal">
+            <li>Laptop dengan Serial Number tersebut di atas saya kembalikan kepada IT Support Seat Management — Angkasa Pura Supports dalam kondisi yang sesuai dengan keterangan pada Berita Acara ini.</li>
+            <li>Saya telah memindahkan dan/atau menghapus seluruh data pribadi dari laptop tersebut, termasuk akun login, file, dokumen, dan media yang bersifat pribadi.</li>
+            <li>Saya tidak menyimpan salinan kredensial, akses, kunci enkripsi, atau data milik perusahaan setelah pengembalian dilakukan.</li>
+            <li>Saya menyerahkan seluruh perlengkapan terkait (charger, tas, dll) sesuai daftar yang tercantum pada Berita Acara ini.</li>
+            <li>Apabila di kemudian hari ditemukan kerusakan atau kehilangan pada laptop tersebut yang diakibatkan oleh kelalaian saya selama masa peminjaman, saya bersedia bertanggung jawab penuh.</li>
+            <li>Saya menyatakan bahwa seluruh keterangan dalam Berita Acara ini dibuat dengan sebenar-benarnya tanpa adanya tekanan dari pihak manapun.</li>
+          </ol>
+          {bap.signature_pengembalian && (
+            <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold"
+              style={{ backgroundColor: '#DCFCE7', color: '#166534' }}>
+              ✓ Telah disetujui & ditandatangani
+            </div>
+          )}
+        </div>
+
         <button
           onClick={() => printBeritaAcaraPengembalian(bap)}
           className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white rounded-xl border-0 cursor-pointer transition-colors shadow-sm"
