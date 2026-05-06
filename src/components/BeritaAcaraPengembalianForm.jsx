@@ -62,6 +62,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
   const [error, setError]           = useState(null)
   const [success, setSuccess]       = useState(false)
   const [defaultItSig, setDefaultItSig] = useState('')
+  const [agreedTnc, setAgreedTnc]   = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -400,11 +401,63 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
               <input name="pengembalian_phone" value={form.pengembalian_phone} onChange={handleChange}
                 placeholder="0812-3456-7890 (untuk kirim BAP via WA)" className={inputClass} {...focus} />
             </Field>
-            <SignaturePad
-              label="Tanda Tangan User (Opsional)"
-              value={form.signature_pengembalian}
-              onChange={sig => setForm(f => ({ ...f, signature_pengembalian: sig }))}
-            />
+
+            {/* Syarat & Ketentuan */}
+            <div className="rounded-lg p-4 mt-2" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FCD34D' }}>
+              <p className="text-xs font-bold uppercase tracking-wide m-0 mb-2" style={{ color: '#92400E' }}>
+                Syarat & Ketentuan Pengembalian
+              </p>
+              <p className="text-xs text-amber-900 m-0 mb-2">
+                Saya yang bertanda tangan di bawah ini menyatakan sehubungan dengan pengembalian laptop:
+              </p>
+              <div className="bg-white rounded-md p-3 mb-3 text-xs space-y-1">
+                <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Hostname</span><span className="text-gray-400 px-1">:</span><span className="font-mono font-medium text-gray-800">{form.hostname || '—'}</span></div>
+                <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Serial Number</span><span className="text-gray-400 px-1">:</span><span className="font-mono font-medium text-gray-800">{form.serial_number || '—'}</span></div>
+                <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Kode Aset</span><span className="text-gray-400 px-1">:</span><span className="font-mono font-medium text-gray-800">{form.kode_aset || '—'}</span></div>
+                <div className="flex"><span className="w-28 text-gray-500 flex-shrink-0">Nama / Tipe</span><span className="text-gray-400 px-1">:</span><span className="font-medium text-gray-800">{form.nama_perangkat || '—'}</span></div>
+              </div>
+              <p className="text-xs text-amber-900 m-0 mb-2">bahwa:</p>
+              <ol className="text-xs text-amber-900 m-0 pl-5 space-y-1.5 list-decimal">
+                <li>Laptop dengan Serial Number tersebut di atas saya kembalikan kepada IT Support Seat Management — Angkasa Pura Supports dalam kondisi yang sesuai dengan keterangan pada Berita Acara ini.</li>
+                <li>Saya telah memindahkan dan/atau menghapus seluruh data pribadi dari laptop tersebut, termasuk akun login, file, dokumen, dan media yang bersifat pribadi.</li>
+                <li>Saya tidak menyimpan salinan kredensial, akses, kunci enkripsi, atau data milik perusahaan setelah pengembalian dilakukan.</li>
+                <li>Saya menyerahkan seluruh perlengkapan terkait (charger, tas, dll) sesuai daftar yang tercantum pada Berita Acara ini.</li>
+                <li>Apabila di kemudian hari ditemukan kerusakan atau kehilangan pada laptop tersebut yang diakibatkan oleh kelalaian saya selama masa peminjaman, saya bersedia bertanggung jawab penuh.</li>
+                <li>Saya menyatakan bahwa seluruh keterangan dalam Berita Acara ini dibuat dengan sebenar-benarnya tanpa adanya tekanan dari pihak manapun.</li>
+              </ol>
+
+              <label className="flex items-start gap-2 mt-3 cursor-pointer p-2 rounded transition-colors"
+                style={{ backgroundColor: agreedTnc ? '#DCFCE7' : 'transparent' }}>
+                <input
+                  type="checkbox"
+                  checked={agreedTnc}
+                  onChange={e => {
+                    setAgreedTnc(e.target.checked)
+                    // Reset signature kalau user uncheck (safety)
+                    if (!e.target.checked) {
+                      setForm(f => ({ ...f, signature_pengembalian: null }))
+                    }
+                  }}
+                  className="mt-0.5 cursor-pointer flex-shrink-0"
+                />
+                <span className="text-xs font-medium" style={{ color: agreedTnc ? '#166534' : '#92400E' }}>
+                  Saya telah membaca, memahami, dan menyetujui seluruh poin di atas terkait pengembalian laptop dengan Serial Number yang tertera.
+                </span>
+              </label>
+            </div>
+
+            {/* Signature pad muncul HANYA setelah checkbox dicentang */}
+            {agreedTnc ? (
+              <SignaturePad
+                label="Tanda Tangan User"
+                value={form.signature_pengembalian}
+                onChange={sig => setForm(f => ({ ...f, signature_pengembalian: sig }))}
+              />
+            ) : (
+              <div className="rounded-lg p-3 text-center text-xs" style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}>
+                ✏️ Centang persetujuan di atas untuk menampilkan kotak tanda tangan
+              </div>
+            )}
           </div>
         </div>
 
