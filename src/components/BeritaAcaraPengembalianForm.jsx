@@ -61,6 +61,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
   const [success, setSuccess]       = useState(false)
+  const [defaultItSig, setDefaultItSig] = useState('')
 
   useEffect(() => {
     async function init() {
@@ -77,6 +78,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
           penerima_nama:    f.penerima_nama    || cfg.default_pihak_it_nama    || '',
           penerima_jabatan: f.penerima_jabatan || cfg.default_pihak_it_jabatan || '',
         }))
+        setDefaultItSig(cfg.default_pihak_it_signature || '')
       } catch (err) {
         setError(err.message)
       }
@@ -420,6 +422,19 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
               <input name="penerima_jabatan" value={form.penerima_jabatan} onChange={handleChange}
                 placeholder="IT Services & Support Specialist" className={inputClass} {...focus} />
             </Field>
+            {defaultItSig && (
+              <Field label="Tanda Tangan">
+                <div className="rounded-lg border border-gray-200 bg-white p-2 flex items-center justify-center" style={{ minHeight: 80 }}>
+                  <img src={defaultItSig} alt="ttd" style={{ maxHeight: 70, maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+                <p className="text-[11px] text-gray-400 m-0 mt-1">Otomatis dari pengaturan PIC IT.</p>
+              </Field>
+            )}
+            {!defaultItSig && (
+              <p className="text-[11px] text-amber-600 m-0">
+                Tanda tangan PIC IT belum diatur. Buka <strong>Settings</strong> untuk upload.
+              </p>
+            )}
           </div>
         </div>
       </div>

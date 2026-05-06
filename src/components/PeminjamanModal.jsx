@@ -47,6 +47,8 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
+  const [defaultItSig, setDefaultItSig] = useState('')
+
   // Auto-fill Pihak Pertama (Penyerah) dari app_config
   useEffect(() => {
     getAppConfig().then(cfg => {
@@ -55,6 +57,7 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
         penyerah_nama:    f.penyerah_nama    || cfg.default_pihak_it_nama    || '',
         penyerah_jabatan: f.penyerah_jabatan || cfg.default_pihak_it_jabatan || '',
       }))
+      setDefaultItSig(cfg.default_pihak_it_signature || '')
     }).catch(() => {})
   }, [])
 
@@ -216,6 +219,20 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
                   <input name="penyerah_jabatan" value={form.penyerah_jabatan} onChange={handleChange}
                     placeholder="Opsional" className={inputClass} {...focus} />
                 </div>
+                {defaultItSig && (
+                  <div>
+                    <Label>Tanda Tangan</Label>
+                    <div className="rounded-lg border border-gray-200 bg-white p-2 flex items-center justify-center" style={{ minHeight: 80 }}>
+                      <img src={defaultItSig} alt="ttd" style={{ maxHeight: 70, maxWidth: '100%', objectFit: 'contain' }} />
+                    </div>
+                    <p className="text-[11px] text-gray-400 m-0 mt-1">Otomatis dari pengaturan PIC IT.</p>
+                  </div>
+                )}
+                {!defaultItSig && (
+                  <p className="text-[11px] text-amber-600 m-0">
+                    Tanda tangan PIC IT belum diatur. Buka <strong>Settings</strong> untuk upload.
+                  </p>
+                )}
               </div>
             </div>
             <div>
