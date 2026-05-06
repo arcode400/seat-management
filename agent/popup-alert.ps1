@@ -50,17 +50,17 @@ $lblHeader.Size = New-Object System.Drawing.Size(440, 30)
 $form.Controls.Add($lblHeader)
 
 $lblMsg = New-Object System.Windows.Forms.Label
-$lblMsg.Text = "Sistem mendeteksi laptop ini sudah $DaysOutside hari tidak konek ke WiFi kantor.`r`nMohon konfirmasi alasan Anda untuk melanjutkan kerja:"
+$lblMsg.Text = "Sistem mendeteksi laptop ini telah $DaysOutside hari tidak terhubung ke WiFi kantor.`r`nMohon sampaikan keterangan Anda terkait kondisi tersebut. Untuk informasi lebih lanjut, silakan hubungi seat.management@injourneyairports.id."
 $lblMsg.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
 $lblMsg.Location = New-Object System.Drawing.Point(20, 55)
-$lblMsg.Size = New-Object System.Drawing.Size(440, 50)
+$lblMsg.Size = New-Object System.Drawing.Size(440, 70)
 $form.Controls.Add($lblMsg)
 
 $txtAlasan = New-Object System.Windows.Forms.TextBox
 $txtAlasan.Multiline = $true
 $txtAlasan.ScrollBars = "Vertical"
-$txtAlasan.Location = New-Object System.Drawing.Point(20, 110)
-$txtAlasan.Size = New-Object System.Drawing.Size(440, 130)
+$txtAlasan.Location = New-Object System.Drawing.Point(20, 130)
+$txtAlasan.Size = New-Object System.Drawing.Size(440, 110)
 $txtAlasan.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 $form.Controls.Add($txtAlasan)
 
@@ -73,7 +73,7 @@ $lblStatus.Size = New-Object System.Drawing.Size(300, 20)
 $form.Controls.Add($lblStatus)
 
 $btnSubmit = New-Object System.Windows.Forms.Button
-$btnSubmit.Text = "Kirim ke IT"
+$btnSubmit.Text = "Kirim Feedback"
 $btnSubmit.Location = New-Object System.Drawing.Point(330, 245)
 $btnSubmit.Size = New-Object System.Drawing.Size(130, 35)
 $btnSubmit.BackColor = [System.Drawing.Color]::FromArgb(13, 71, 161)
@@ -110,7 +110,7 @@ $btnSubmit.Add_Click({
 
     Invoke-RestMethod -Uri $endpoint -Method Post -Body $body -Headers $headers -TimeoutSec 15 | Out-Null
 
-    [System.Windows.Forms.MessageBox]::Show("Terima kasih. Alasan Anda telah dikirim ke IT.`r`n`r`nSilakan lanjutkan kerja seperti biasa.", "Berhasil Terkirim", "OK", "Information")
+    [System.Windows.Forms.MessageBox]::Show("Terima kasih atas feedback Anda.`r`n`r`nKeterangan Anda telah kami terima dan akan ditindaklanjuti oleh tim IT Support.`r`n`r`nApabila ada pertanyaan lebih lanjut, silakan hubungi:`r`nseat.management@injourneyairports.id", "Feedback Terkirim", "OK", "Information")
     $script:submitted = $true
     $form.Close()
   } catch {
@@ -127,11 +127,12 @@ $txtAlasan.Add_TextChanged({
 $form.Controls.Add($btnSubmit)
 
 $lblFooter = New-Object System.Windows.Forms.Label
-$lblFooter.Text = "IT Support Seat Management - Angkasa Pura Supports"
+$lblFooter.Text = "IT Support Seat Management  -  Angkasa Pura Supports"
 $lblFooter.Font = New-Object System.Drawing.Font("Segoe UI", 8)
 $lblFooter.ForeColor = [System.Drawing.Color]::Gray
 $lblFooter.Location = New-Object System.Drawing.Point(20, 305)
 $lblFooter.Size = New-Object System.Drawing.Size(440, 20)
+$lblFooter.TextAlign = "MiddleCenter"
 $form.Controls.Add($lblFooter)
 
 [void]$form.ShowDialog()
