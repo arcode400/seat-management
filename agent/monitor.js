@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.1.1'
+const CURRENT_VERSION = '1.1.2'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 // Popup script di-embed sebagai base64 supaya self-contained (1 file deploy).
@@ -415,12 +415,43 @@ async function handleShowPopup(cmd) {
   const trCmd = `powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ${tmpWrapper}`
 
   try {
-    // Buat scheduled task yang run as INTERACTIVE user (bypass Session 0 isolation).
-    // /ru INTERACTIVE = jalan di session user yang lagi login, bukan SYSTEM.
-    execSync(`schtasks /create /tn "${taskName}" /tr "${trCmd}" /sc once /st 23:59 /ru INTERACTIVE /f`, { windowsHide: true, stdio: 'ignore' })
-    execSync(`schtasks /run /tn "${taskName}"`, { windowsHide: true, stdio: 'ignore' })
-    await markCommand(cmd.id, 'executed', 'Popup triggered di session user via schtasks')
-    console.log('[Popup] Triggered di session user.')
+    // Cari user yang lagi login di console (Session 1) lewat 'query session'
+    let loggedInUser = null
+    try {
+      const sessions = execSync('query session', { encoding: 'utf8', windowsHide: true })
+      // Format output: SESSIONNAME  USERNAME  ID  STATE  TYPE  DEVICE
+      // Cari row "console" yang Active
+      const lines = sessions.split('\n')
+      for (const line of lines) {
+        if (/console\s+\S+\s+\d+\s+Active/i.test(line)) {
+          loggedInUser = line.trim().split(/\s+/)[1]
+          break
+        }
+      }
+    } catch {}
+
+    // Pakai username spesifik kalau ada, fallback ke INTERACTIVE
+    const ru = loggedInUser ? `"${loggedInUser}"` : 'INTERACTIVE'
+    const createCmd = `schtasks /create /tn "${taskName}" /tr "${trCmd}" /sc once /st 23:59 /ru ${ru} /f`
+
+    let createOutput = ''
+    try {
+      createOutput = execSync(createCmd, { windowsHide: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+    } catch (err) {
+      const stderr = err.stderr ? err.stderr.toString() : ''
+      const stdout = err.stdout ? err.stdout.toString() : ''
+      throw new Error(`create failed (ru=${ru}): ${stderr || stdout || err.message}`)
+    }
+
+    try {
+      execSync(`schtasks /run /tn "${taskName}"`, { windowsHide: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+    } catch (err) {
+      const stderr = err.stderr ? err.stderr.toString() : ''
+      throw new Error(`run failed: ${stderr || err.message}`)
+    }
+
+    await markCommand(cmd.id, 'executed', `Popup triggered (ru=${ru}, user=${loggedInUser || 'unknown'})`)
+    console.log(`[Popup] Triggered di session user (ru=${ru}).`)
   } catch (err) {
     await markCommand(cmd.id, 'failed', `schtasks: ${err.message}`)
     console.error('[Popup] Gagal:', err.message)
