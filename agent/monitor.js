@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.9'
+const CURRENT_VERSION = '1.1.0'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -394,17 +394,15 @@ async function handleShowPopup(cmd) {
 
   const { spawn } = require('child_process')
   popupRunning = true
-  // -WindowStyle Hidden: PowerShell console hidden, tapi Form popup tetap muncul.
-  // Jangan pakai windowsHide:true (Node) — itu CREATE_NO_WINDOW yang juga hide Form-nya.
   const ps = spawn('powershell.exe', [
-    '-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass',
+    '-NoProfile', '-ExecutionPolicy', 'Bypass',
     '-File', scriptPath,
     '-AlertId', alertId,
     '-LaptopId', cachedLaptopId,
     '-DaysOutside', String(daysOutside),
     '-SupabaseUrl', process.env.SUPABASE_URL,
     '-SupabaseKey', process.env.SUPABASE_ANON_KEY,
-  ], { detached: false, stdio: 'ignore' })
+  ], { detached: false, windowsHide: true })
 
   ps.on('exit', async (code) => {
     popupRunning = false
