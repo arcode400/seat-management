@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.1.2'
+const CURRENT_VERSION = '1.1.3'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 // Popup script di-embed sebagai base64 supaya self-contained (1 file deploy).
@@ -431,23 +431,24 @@ async function handleShowPopup(cmd) {
     } catch {}
 
     // Pakai username spesifik kalau ada, fallback ke INTERACTIVE
-    const ru = loggedInUser ? `"${loggedInUser}"` : 'INTERACTIVE'
-    const createCmd = `schtasks /create /tn "${taskName}" /tr "${trCmd}" /sc once /st 23:59 /ru ${ru} /f`
+    const ru = loggedInUser || 'INTERACTIVE'
+    const { spawnSync } = require('child_process')
 
-    let createOutput = ''
-    try {
-      createOutput = execSync(createCmd, { windowsHide: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-    } catch (err) {
-      const stderr = err.stderr ? err.stderr.toString() : ''
-      const stdout = err.stdout ? err.stdout.toString() : ''
-      throw new Error(`create failed (ru=${ru}): ${stderr || stdout || err.message}`)
+    // /create
+    const createArgs = ['/create', '/tn', taskName, '/tr', trCmd, '/sc', 'once', '/st', '23:59', '/ru', ru, '/f']
+    const createRes = spawnSync('schtasks', createArgs, { encoding: 'utf8', windowsHide: true })
+    if (createRes.status !== 0) {
+      const out = (createRes.stdout || '').trim()
+      const err = (createRes.stderr || '').trim()
+      throw new Error(`create failed (ru=${ru}, code=${createRes.status}) ${err || out || 'no output'}`)
     }
 
-    try {
-      execSync(`schtasks /run /tn "${taskName}"`, { windowsHide: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-    } catch (err) {
-      const stderr = err.stderr ? err.stderr.toString() : ''
-      throw new Error(`run failed: ${stderr || err.message}`)
+    // /run
+    const runRes = spawnSync('schtasks', ['/run', '/tn', taskName], { encoding: 'utf8', windowsHide: true })
+    if (runRes.status !== 0) {
+      const out = (runRes.stdout || '').trim()
+      const err = (runRes.stderr || '').trim()
+      throw new Error(`run failed (code=${runRes.status}) ${err || out || 'no output'}`)
     }
 
     await markCommand(cmd.id, 'executed', `Popup triggered (ru=${ru}, user=${loggedInUser || 'unknown'})`)
