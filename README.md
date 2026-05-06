@@ -1,6 +1,6 @@
 # Handover Document — Seat Management System
 **PT Angkasa Pura Supports — IT Support Team**
-Dibuat oleh: M. Aris Saputro | Terakhir diupdate: Mei 2026
+Dibuat oleh: M. Aris Saputro | Terakhir diupdate: 7 Mei 2026
 
 ---
 
@@ -65,10 +65,12 @@ Sistem ini adalah aplikasi web internal untuk mengelola aset IT (laptop, PC, per
 User peminjam **tidak punya akun login** ke sistem. Distribusi dokumen lewat **WhatsApp** dengan link unik per BA.
 
 **BAP (Pengembalian):**
-1. Admin/teknisi bikin BAP via form, isi tanda tangan user di kotak signature pad
-2. Optional: isi nomor WhatsApp user
-3. Submit → klik tombol WA di Riwayat BA → WhatsApp kebuka dengan template pesan + link `/bap/<id>` siap kirim
-4. User klik link → halaman publik nampilin BAP + auto-trigger dialog "Save as PDF" untuk arsip
+1. Admin/teknisi bikin BAP via form
+2. User baca **Syarat & Ketentuan Pengembalian** (6 poin) dengan detail laptop spesifik (hostname, SN, kode aset, tipe)
+3. User centang checkbox setuju → kotak signature pad muncul → user tandatangan
+4. Optional: isi nomor WhatsApp user
+5. Submit → klik tombol WA di Riwayat BA → WhatsApp kebuka dengan template pesan + link `/bap/<id>` siap kirim
+6. User klik link → halaman publik nampilin BAP + auto-trigger dialog "Save as PDF" untuk arsip
 
 **BAST (Serah Terima):**
 1. Admin bikin BAST via form Pinjamkan — nama peminjam **opsional** (bisa kosong)
@@ -108,6 +110,13 @@ User peminjam **tidak punya akun login** ke sistem. Distribusi dokumen lewat **W
 ### 8. Logs (Audit Trail)
 - Semua aktivitas tercatat: login, logout, tambah data, hapus data, dll
 - Hanya bisa diakses admin
+
+### 9. Settings (Pengaturan PIC IT Default)
+- Halaman pengaturan global untuk admin/super admin
+- Set nama, jabatan, dan tanda tangan **default Pihak IT** yang otomatis dipakai di setiap BAST (Pihak Pertama) dan BAP (Pihak Kedua)
+- Tanda tangan upload via file PNG/JPG (max 2MB) — disimpan sebagai base64 di tabel `app_config`
+- Auto-fill di form BAST/BAP, plus auto-embed di PDF print
+- Saat PIC mutasi/diganti, super admin tinggal edit nama/jabatan + upload tanda tangan baru → semua BAST/BAP berikutnya otomatis pakai data baru
 
 ---
 
@@ -267,7 +276,9 @@ Agent cek update setiap 1 jam ke tabel `agent_config` di Supabase. Jika ada vers
 | Refresh health (disk, battery, crash) | Setiap 6 jam |
 | Cek update versi | Setiap 1 jam |
 
-### Versi agent saat ini: `v1.0.8`
+### Versi agent saat ini: `v1.1.3`
+
+**Note tentang remote popup feature (v1.0.9–1.1.3):** sempat dicoba bikin fitur popup notification cross-session dari agent SYSTEM mode (admin click → popup di laptop user). Backend infrastructure (tabel `agent_commands`, `alert_responses`, RPC `submit_alert_response`) udah jadi, tapi UI tombol di-hide karena fundamental Windows limitation: agent yang jalan as SYSTEM gak bisa spawn UI di session user (Session 0 isolation + Access Denied saat schtasks `/ru INTERACTIVE`). Database tabel tetep dipertahankan untuk masa depan (kalau install method dipindah ke LogonTrigger user mode).
 
 ---
 
@@ -285,6 +296,9 @@ Tabel-tabel utama:
 | `laptop_ssid_history` | Riwayat WiFi harian tiap laptop |
 | `laptop_location_alerts` | Alert laptop 7+ hari di luar kantor |
 | `agent_config` | Konfigurasi versi agent untuk auto-update |
+| `app_config` | Setting global aplikasi (nama/jabatan/tanda tangan PIC IT default) |
+| `agent_commands` | Queue command dari admin ke agent (popup feature, currently hidden) |
+| `alert_responses` | Riwayat alasan user dari popup confirmation (currently hidden) |
 | `audit_logs` | Log semua aktivitas user |
 | `active_sessions` | Session aktif user yang sedang login |
 | `issues` | Laporan kerusakan/masalah |
@@ -311,10 +325,25 @@ Kolom tanda tangan digital di tabel `berita_acara_pengembalian` (BAP):
 - `signed_at` (timestamptz) — waktu BAP ditandatangani
 - `pengembalian_phone` (text) — nomor WhatsApp user untuk distribusi link
 
+Tabel `app_config` (key/value store untuk setting global):
+- `default_pihak_it_nama` (text) — nama default PIC IT (mis. "FAJAR AJI NUGROHO")
+- `default_pihak_it_jabatan` (text) — jabatan default
+- `default_pihak_it_signature` (text) — base64 PNG/JPG tanda tangan default
+
+Schema:
+```sql
+CREATE TABLE app_config (
+  key text PRIMARY KEY,
+  value text,
+  updated_at timestamptz DEFAULT now()
+);
+```
+
 RPC functions untuk halaman publik (anon-accessible):
 - `get_bap_public(p_id uuid)` — fetch BAP by id untuk halaman `/bap/:id`
 - `get_bast_public(p_id uuid)` — fetch BAST by id untuk halaman `/bast-sign/:id`
 - `submit_bast_signature(...)` — anti-double-submit endpoint untuk user submit ttd
+- `submit_alert_response(...)` — endpoint untuk popup feature (currently hidden)
 
 Constraint tambahan: unique index `laptops_serial_number_unique` pada kolom `serial_number` (mencegah duplicate auto-register).
 
@@ -344,7 +373,7 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 
 ---
 
-## Status Pengembangan (April 2026)
+## Status Pengembangan (Mei 2026)
 
 ### Sudah Selesai:
 - [x] Landing page publik dengan animasi
@@ -370,6 +399,11 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 - [x] Role Teknisi (3 orang teknisi bisa login, bikin/edit BAP sendiri)
 - [x] Reset TTD oleh admin kalau salah user yang ttd
 - [x] Dashboard card Berita Acara dengan filter periode (Per Bulan / Per Tahun)
+- [x] Halaman Settings — set default nama/jabatan/tanda tangan PIC IT (Pak Fajar)
+- [x] Auto-embed tanda tangan PIC IT di PDF BAST (Pihak Pertama) dan BAP (Pihak Kedua)
+- [x] Syarat & Ketentuan Pengembalian di BAP — checkbox agreement wajib sebelum signature pad muncul
+- [x] Tooltip ℹ️ di Dashboard untuk jelasin perbedaan Online (top card) vs Status Laptop (donut)
+- [x] Tab Peminjaman scrollable di mobile
 - [x] Audit log semua aktivitas
 - [x] Export CSV & cetak PDF
 - [x] Row Level Security (RLS)
@@ -379,9 +413,10 @@ Catatan: laptop yang jam-nya tidak sync dengan NTP bisa keliatan Offline padahal
 ### Belum / Dalam Rencana:
 - [ ] Reports & analytics (menu sudah ada tapi disabled)
 - [ ] Alerts custom (menu sudah ada tapi disabled)
-- [ ] Settings (menu sudah ada tapi disabled)
 - [ ] Auto-deploy agent via GPO (butuh koordinasi IT Infra / domain admin)
 - [ ] Agent hanya register laptop yang sudah terdaftar di database
+- [ ] Remote popup feature (di-hide karena Session 0 isolation, butuh agent install mode user)
+- [ ] Antivirus whitelist coordination (whitelist `C:\SeatAgent\` di endpoint protection corporate)
 
 ---
 
