@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, FileText } from 'lucide-react'
 import { createBeritaAcara } from '../services/beritaAcaraService'
 import { updateLaptop } from '../services/laptopService'
 import { printBeritaAcara } from '../utils/printBeritaAcara'
 import { useAuth } from '../context/AuthContext'
+import { getAppConfig } from '../services/appConfigService'
 import SignaturePad from './SignaturePad'
 
 const inputClass = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none transition-colors'
@@ -34,9 +35,9 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
     spek_storage:     asset.storage_summary || (asset.storage_gb ? `${asset.storage_gb} GB` : ''),
     teknisi:          '',
     keterangan:       '',
-    penyerah_nama:    'FAJAR AJI NUGROHO',
+    penyerah_nama:    '',
     penyerah_nip:     '',
-    penyerah_jabatan: 'PLT. IT SERVICES & SUPPORT SPECIALIST',
+    penyerah_jabatan: '',
     penerima_nama:    '',
     penerima_nip:     asset.nip || '',
     penerima_jabatan: '',
@@ -45,6 +46,17 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
+
+  // Auto-fill Pihak Pertama (Penyerah) dari app_config
+  useEffect(() => {
+    getAppConfig().then(cfg => {
+      setForm(f => ({
+        ...f,
+        penyerah_nama:    f.penyerah_nama    || cfg.default_pihak_it_nama    || '',
+        penyerah_jabatan: f.penyerah_jabatan || cfg.default_pihak_it_jabatan || '',
+      }))
+    }).catch(() => {})
+  }, [])
 
   function handleChange(e) {
     const { name, value } = e.target

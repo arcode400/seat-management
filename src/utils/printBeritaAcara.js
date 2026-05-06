@@ -1,3 +1,5 @@
+import { getAppConfig } from '../services/appConfigService'
+
 // ─── Konversi tanggal ke teks Bahasa Indonesia ───────────────────────────────
 
 const HARI   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
@@ -37,7 +39,13 @@ function formatTanggalLengkap(dateStr) {
 
 // ─── Generator HTML dokumen BAST ─────────────────────────────────────────────
 
-export function printBeritaAcara(ba) {
+export async function printBeritaAcara(ba) {
+  // Ambil tanda tangan default Pihak IT dari app_config (kalau ada)
+  let defaultItSig = ''
+  try {
+    const cfg = await getAppConfig()
+    defaultItSig = cfg.default_pihak_it_signature || ''
+  } catch {}
   const tgl = ba.tanggal
     ? formatTanggalLengkap(ba.tanggal)
     : { hari: '—', tgl: '—', bln: '—', thn: '—', numeric: '—' }
@@ -269,7 +277,7 @@ export function printBeritaAcara(ba) {
     </div>
     <div class="ttd-box">
       <div class="ttd-label">PIHAK PERTAMA</div>
-      <div class="ttd-space"></div>
+      <div class="ttd-space">${defaultItSig ? `<img src="${defaultItSig}" alt="ttd"/>` : ''}</div>
       <div>
         <span class="ttd-name">${ba.penyerah_nama ? `( ${ba.penyerah_nama} )` : '&nbsp;'}</span>
       </div>

@@ -5,6 +5,7 @@ import { getAllUsers } from '../services/userService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
 import { createBAP } from '../services/beritaAcaraPengembalianService'
 import { useAuth } from '../context/AuthContext'
+import { getAppConfig } from '../services/appConfigService'
 import SignaturePad from './SignaturePad'
 
 const emptyForm = {
@@ -19,7 +20,7 @@ const emptyForm = {
   spek_storage: '',
   teknisi: '',
   pengembalian_nama: '', pengembalian_jabatan: '', pengembalian_phone: '',
-  penerima_nama: 'FAJAR AJI NUGROHO', penerima_jabatan: 'PLT. IT SERVICES & SUPPORT SPECIALIST',
+  penerima_nama: '', penerima_jabatan: '',
   icloud_lock: 'Tidak',
   kelengkapan_laptop: 'Ada',
   kelengkapan_charger: 'Ada',
@@ -64,10 +65,18 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
   useEffect(() => {
     async function init() {
       try {
-        const [ls, us, bs] = await Promise.all([getAllLaptops(), getAllUsers(), getAllBeritaAcara()])
+        const [ls, us, bs, cfg] = await Promise.all([
+          getAllLaptops(), getAllUsers(), getAllBeritaAcara(), getAppConfig().catch(() => ({})),
+        ])
         setLaptops(ls)
         setUsers(us)
         setBastList(bs)
+        // Auto-fill Pihak Kedua (Penerima/IT) dari app_config
+        setForm(f => ({
+          ...f,
+          penerima_nama:    f.penerima_nama    || cfg.default_pihak_it_nama    || '',
+          penerima_jabatan: f.penerima_jabatan || cfg.default_pihak_it_jabatan || '',
+        }))
       } catch (err) {
         setError(err.message)
       }

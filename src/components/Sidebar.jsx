@@ -14,12 +14,12 @@ const NAV_ITEMS = [
   { key: 'FormKomplain', icon: MessageSquareWarning, label: 'Form Komplain' },
   { key: 'Users', icon: Users, label: 'Users' },
   { key: 'Logs', icon: ScrollText, label: 'Logs' },
+  { key: 'Settings', icon: Settings, label: 'Settings' },
 ]
 
 const DISABLED_ITEMS = [
   { key: 'reports', icon: BarChart2, label: 'Reports' },
   { key: 'alerts', icon: Bell, label: 'Alerts' },
-  { key: 'settings', icon: Settings, label: 'Settings' },
 ]
 
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
@@ -32,9 +32,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   }
 
   const STAFF_ONLY = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'FormKomplain']
+  // Settings hanya untuk super admin (admin biasa juga gak bisa, biar setting global gak gampang berubah)
   const visibleNav = isStaff
     ? NAV_ITEMS.filter(i => STAFF_ONLY.includes(i.key))
-    : NAV_ITEMS
+    : NAV_ITEMS.filter(i => i.key !== 'Settings' || isAdmin)
 
   return (
     <>

@@ -1,3 +1,5 @@
+import { getAppConfig } from '../services/appConfigService'
+
 const HARI   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
 const BULAN  = ['','Januari','Februari','Maret','April','Mei','Juni',
                 'Juli','Agustus','September','Oktober','November','Desember']
@@ -36,7 +38,13 @@ function pil(selected, options) {
   return '[' + options.map(o => o === selected ? `<strong>${o}</strong>` : o).join(' / ') + ']'
 }
 
-export function printBeritaAcaraPengembalian(bap) {
+export async function printBeritaAcaraPengembalian(bap) {
+  // Ambil tanda tangan default Pihak IT dari app_config (kalau ada)
+  let defaultItSig = ''
+  try {
+    const cfg = await getAppConfig()
+    defaultItSig = cfg.default_pihak_it_signature || ''
+  } catch {}
   const tgl = bap.tanggal
     ? formatTanggalLengkap(bap.tanggal)
     : { hari: '—', tgl: '—', bln: '—', thn: '—', numeric: '—' }
@@ -229,7 +237,7 @@ export function printBeritaAcaraPengembalian(bap) {
   <div class="ttd-row">
     <div class="ttd-box">
       <div class="ttd-label">PIHAK KEDUA</div>
-      <div class="ttd-space"></div>
+      <div class="ttd-space">${defaultItSig ? `<img src="${defaultItSig}" alt="ttd"/>` : ''}</div>
       <div>
         <span class="ttd-name">${bap.penerima_nama ? `( ${bap.penerima_nama} )` : '&nbsp;'}</span>
       </div>

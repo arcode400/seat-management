@@ -13,6 +13,7 @@ import IssuesPage from './pages/IssuesPage'
 import PeminjamanPage from './pages/PeminjamanPage'
 import BeritaAcaraKhususPage from './pages/BeritaAcaraKhususPage'
 import FormKomplainPage from './pages/FormKomplainPage'
+import SettingsPage from './pages/SettingsPage'
 import { useAuth } from './context/AuthContext'
 import { logAction } from './services/auditService'
 import { updateActiveSession } from './services/activeSessionService'
@@ -26,6 +27,7 @@ const PAGE_TITLES = {
   FormKomplain: 'Form Komplain',
   Users: 'Manajemen User',
   Logs: 'Audit Log',
+  Settings: 'Pengaturan',
 }
 
 function AccessDenied({ msg }) {
@@ -137,6 +139,9 @@ export default function App() {
 
           {activeTab === 'Logs' && isAdmin && <LogsPage />}
           {activeTab === 'Logs' && !isAdmin && <AccessDenied msg="Halaman ini hanya dapat diakses oleh Admin." />}
+
+          {activeTab === 'Settings' && isAdmin && <SettingsPage />}
+          {activeTab === 'Settings' && !isAdmin && <AccessDenied msg="Halaman ini hanya dapat diakses oleh Admin." />}
         </main>
       </div>
     </div>
