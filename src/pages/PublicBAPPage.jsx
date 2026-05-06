@@ -116,6 +116,9 @@ export default function PublicBAPPage() {
               ✓ Telah disetujui & ditandatangani
             </div>
           )}
+          <p className="text-[11px] italic mt-3" style={{ color: '#78350F' }}>
+            Dokumen ini tercatat secara digital dan memiliki kekuatan hukum yang setara dengan tanda tangan manual.
+          </p>
         </div>
 
         <button

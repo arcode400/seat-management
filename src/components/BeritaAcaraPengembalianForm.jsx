@@ -62,7 +62,9 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
   const [error, setError]           = useState(null)
   const [success, setSuccess]       = useState(false)
   const [defaultItSig, setDefaultItSig] = useState('')
-  const [agreedTnc, setAgreedTnc]   = useState(false)
+  const [readBA, setReadBA]         = useState(false)
+  const [agreeTnc, setAgreeTnc]     = useState(false)
+  const agreedAll = readBA && agreeTnc
 
   useEffect(() => {
     async function init() {
@@ -426,28 +428,47 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
                 <li>Saya menyatakan bahwa seluruh keterangan dalam Berita Acara ini dibuat dengan sebenar-benarnya tanpa adanya tekanan dari pihak manapun.</li>
               </ol>
 
-              <label className="flex items-start gap-2 mt-3 cursor-pointer p-2 rounded transition-colors"
-                style={{ backgroundColor: agreedTnc ? '#DCFCE7' : 'transparent' }}>
-                <input
-                  type="checkbox"
-                  checked={agreedTnc}
-                  onChange={e => {
-                    setAgreedTnc(e.target.checked)
-                    // Reset signature kalau user uncheck (safety)
-                    if (!e.target.checked) {
-                      setForm(f => ({ ...f, signature_pengembalian: null }))
-                    }
-                  }}
-                  className="mt-0.5 cursor-pointer flex-shrink-0"
-                />
-                <span className="text-xs font-medium" style={{ color: agreedTnc ? '#166534' : '#92400E' }}>
-                  Saya telah membaca, memahami, dan menyetujui seluruh poin di atas terkait pengembalian laptop dengan Serial Number yang tertera.
-                </span>
-              </label>
+              <div className="space-y-1 mt-3">
+                <label className="flex items-start gap-2 cursor-pointer p-2 rounded transition-colors"
+                  style={{ backgroundColor: readBA ? '#DCFCE7' : 'transparent' }}>
+                  <input
+                    type="checkbox"
+                    checked={readBA}
+                    onChange={e => {
+                      setReadBA(e.target.checked)
+                      if (!e.target.checked) setForm(f => ({ ...f, signature_pengembalian: null }))
+                    }}
+                    className="mt-0.5 cursor-pointer flex-shrink-0"
+                  />
+                  <span className="text-xs font-medium" style={{ color: readBA ? '#166534' : '#92400E' }}>
+                    Saya menyatakan telah membaca seluruh isi Berita Acara ini.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer p-2 rounded transition-colors"
+                  style={{ backgroundColor: agreeTnc ? '#DCFCE7' : 'transparent' }}>
+                  <input
+                    type="checkbox"
+                    checked={agreeTnc}
+                    onChange={e => {
+                      setAgreeTnc(e.target.checked)
+                      if (!e.target.checked) setForm(f => ({ ...f, signature_pengembalian: null }))
+                    }}
+                    className="mt-0.5 cursor-pointer flex-shrink-0"
+                  />
+                  <span className="text-xs font-medium" style={{ color: agreeTnc ? '#166534' : '#92400E' }}>
+                    Saya memahami dan menyetujui seluruh ketentuan yang berlaku.
+                  </span>
+                </label>
+              </div>
+
+              <p className="text-[11px] italic mt-3 px-2" style={{ color: '#78350F' }}>
+                Dokumen ini tercatat secara digital dan memiliki kekuatan hukum yang setara dengan tanda tangan manual.
+              </p>
             </div>
 
-            {/* Signature pad muncul HANYA setelah checkbox dicentang */}
-            {agreedTnc ? (
+            {/* Signature pad muncul HANYA setelah kedua checkbox dicentang */}
+            {agreedAll ? (
               <SignaturePad
                 label="Tanda Tangan User"
                 value={form.signature_pengembalian}
@@ -455,7 +476,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
               />
             ) : (
               <div className="rounded-lg p-3 text-center text-xs" style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}>
-                ✏️ Centang persetujuan di atas untuk menampilkan kotak tanda tangan
+                ✏️ Centang KEDUA persetujuan di atas untuk menampilkan kotak tanda tangan
               </div>
             )}
           </div>
