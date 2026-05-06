@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Save, User, Briefcase, PenTool, RotateCcw, Upload } from 'lucide-react'
+import { Save, User, Briefcase, PenTool, RotateCcw } from 'lucide-react'
 import { getAppConfig, updateAppConfig } from '../services/appConfigService'
 import SignaturePad from '../components/SignaturePad'
 
@@ -123,50 +123,15 @@ export default function SettingsPage() {
                 />
               </div>
             ) : (
-              <>
-                <SignaturePad
-                  label=""
-                  height={160}
-                  value={form.default_pihak_it_signature}
-                  onChange={sig => handleChange('default_pihak_it_signature', sig)}
-                />
-                <div className="flex items-center gap-2 my-3">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">atau</span>
-                  <div className="flex-1 h-px bg-gray-200" />
-                </div>
-                <label
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border-2 border-dashed cursor-pointer transition-colors"
-                  style={{ borderColor: '#D1D5DB', color: '#374151', backgroundColor: '#F9FAFB' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F3F4F6'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F9FAFB'}
-                >
-                  <Upload size={14} />
-                  Upload file gambar tanda tangan (PNG/JPG)
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    style={{ display: 'none' }}
-                    onChange={e => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      if (file.size > 2 * 1024 * 1024) {
-                        setError('Ukuran file maksimal 2MB.')
-                        return
-                      }
-                      const reader = new FileReader()
-                      reader.onload = () => handleChange('default_pihak_it_signature', reader.result)
-                      reader.onerror = () => setError('Gagal membaca file.')
-                      reader.readAsDataURL(file)
-                      e.target.value = '' // reset biar bisa upload file yang sama lagi nanti
-                    }}
-                  />
-                </label>
-              </>
+              <SignaturePad
+                label=""
+                height={160}
+                value={form.default_pihak_it_signature}
+                onChange={sig => handleChange('default_pihak_it_signature', sig)}
+              />
             )}
             <p className="text-xs text-gray-400 mt-1.5">
               Tanda tangan disimpan sebagai gambar di database. Bisa diganti / dihapus kapan saja oleh super admin.
-              <br/>Disarankan pakai PNG dengan background transparan/putih agar tampil bersih di PDF.
             </p>
           </div>
         </div>
