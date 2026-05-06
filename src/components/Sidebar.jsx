@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { key: 'FormKomplain', icon: MessageSquareWarning, label: 'Form Komplain' },
   { key: 'Users', icon: Users, label: 'Users' },
   { key: 'Logs', icon: ScrollText, label: 'Logs' },
-  { key: 'Settings', icon: Settings, label: 'Settings' },
+  { key: 'Settings', icon: Settings, label: 'PIC IT' },
 ]
 
 const DISABLED_ITEMS = [

@@ -27,7 +27,7 @@ const PAGE_TITLES = {
   FormKomplain: 'Form Komplain',
   Users: 'Manajemen User',
   Logs: 'Audit Log',
-  Settings: 'Pengaturan',
+  Settings: 'Pengaturan PIC IT',
 }
 
 function AccessDenied({ msg }) {
