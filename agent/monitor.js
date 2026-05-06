@@ -394,15 +394,17 @@ async function handleShowPopup(cmd) {
 
   const { spawn } = require('child_process')
   popupRunning = true
+  // -WindowStyle Hidden: PowerShell console hidden, tapi Form popup tetap muncul.
+  // Jangan pakai windowsHide:true (Node) — itu CREATE_NO_WINDOW yang juga hide Form-nya.
   const ps = spawn('powershell.exe', [
-    '-NoProfile', '-ExecutionPolicy', 'Bypass',
+    '-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass',
     '-File', scriptPath,
     '-AlertId', alertId,
     '-LaptopId', cachedLaptopId,
     '-DaysOutside', String(daysOutside),
     '-SupabaseUrl', process.env.SUPABASE_URL,
     '-SupabaseKey', process.env.SUPABASE_ANON_KEY,
-  ], { detached: false, windowsHide: true })
+  ], { detached: false, stdio: 'ignore' })
 
   ps.on('exit', async (code) => {
     popupRunning = false
