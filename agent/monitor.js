@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.0.8'
+const CURRENT_VERSION = '1.0.9'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
@@ -329,6 +329,96 @@ async function logDailySSID(ssid) {
   }
 }
 
+// ─── COMMAND QUEUE ────────────────────────────────────────────────────────────
+let popupRunning = false
+
+async function pollCommands() {
+  if (!cachedLaptopId) return
+  try {
+    const { data: commands, error } = await supabase
+      .from('agent_commands')
+      .select('*')
+      .eq('laptop_id', cachedLaptopId)
+      .eq('status', 'pending')
+      .order('requested_at', { ascending: true })
+    if (error) { console.error('[Command] Poll gagal:', error.message); return }
+    if (!commands?.length) return
+
+    for (const cmd of commands) {
+      try {
+        if (cmd.command_type === 'show_popup') {
+          await handleShowPopup(cmd)
+        } else {
+          await markCommand(cmd.id, 'failed', `Unknown command type: ${cmd.command_type}`)
+        }
+      } catch (err) {
+        await markCommand(cmd.id, 'failed', err.message)
+      }
+    }
+  } catch (err) {
+    console.error('[Command] Error:', err.message)
+  }
+}
+
+async function markCommand(id, status, result) {
+  try {
+    await supabase
+      .from('agent_commands')
+      .update({ status, result, executed_at: new Date().toISOString() })
+      .eq('id', id)
+  } catch {}
+}
+
+async function handleShowPopup(cmd) {
+  if (platform !== 'win32') {
+    await markCommand(cmd.id, 'failed', 'Popup hanya support Windows')
+    return
+  }
+  if (popupRunning) return
+
+  const payload = cmd.payload || {}
+  const alertId = payload.alert_id || cmd.id
+  const daysOutside = payload.days_outside ?? 7
+
+  const scriptPath = path.join(__dirname, 'popup-alert.ps1')
+  if (!fs.existsSync(scriptPath)) {
+    await markCommand(cmd.id, 'failed', 'popup-alert.ps1 tidak ditemukan')
+    return
+  }
+
+  console.log(`[Popup] Trigger popup untuk command ${cmd.id}`)
+  await supabase
+    .from('agent_commands')
+    .update({ status: 'executing', executed_at: new Date().toISOString() })
+    .eq('id', cmd.id)
+
+  const { spawn } = require('child_process')
+  popupRunning = true
+  const ps = spawn('powershell.exe', [
+    '-NoProfile', '-ExecutionPolicy', 'Bypass',
+    '-File', scriptPath,
+    '-AlertId', alertId,
+    '-LaptopId', cachedLaptopId,
+    '-DaysOutside', String(daysOutside),
+    '-SupabaseUrl', process.env.SUPABASE_URL,
+    '-SupabaseKey', process.env.SUPABASE_ANON_KEY,
+  ], { detached: false, windowsHide: true })
+
+  ps.on('exit', async (code) => {
+    popupRunning = false
+    if (code === 0) {
+      await markCommand(cmd.id, 'executed', 'Popup ditutup oleh user')
+      console.log('[Popup] Selesai.')
+    } else {
+      await markCommand(cmd.id, 'failed', `PowerShell exit code ${code}`)
+    }
+  })
+  ps.on('error', async (err) => {
+    popupRunning = false
+    await markCommand(cmd.id, 'failed', err.message)
+  })
+}
+
 // ─── AUTO UPDATE ──────────────────────────────────────────────────────────────
 async function checkUpdate() {
   try {
@@ -468,6 +558,8 @@ async function ping() {
     console.log(`[${now.toLocaleTimeString()}] Ping OK — ${hostname} | WiFi: ${ssid ?? '-'} (${diKantor}) | ${cachedLocation.city ?? '-'}`)
     await logDailySSID(ssid)
   }
+
+  await pollCommands()
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
