@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { MapPin, Briefcase, ArrowRightLeft, EyeOff, X, MessageSquareWarning, Clock, MessageSquare } from 'lucide-react'
-import { getPendingAlerts, resolveAlert, updateLaptopLocation, sendPopupCommand, getAlertResponses, getPendingPopupCommands } from '../services/locationAlertService'
+import { MapPin, Briefcase, ArrowRightLeft, EyeOff, X } from 'lucide-react'
+import { getPendingAlerts, resolveAlert, updateLaptopLocation } from '../services/locationAlertService'
 import { useAuth } from '../context/AuthContext'
 
 function MutasiModal({ alert, onClose, onDone }) {
@@ -85,14 +85,11 @@ function MutasiModal({ alert, onClose, onDone }) {
 }
 
 export default function LocationAlerts() {
-  const { user, isAdmin } = useAuth()
+  const { user } = useAuth()
   const [alerts, setAlerts]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [resolving, setResolving] = useState(null)
-  const [sending, setSending]     = useState(null)
   const [mutasiAlert, setMutasiAlert] = useState(null)
-  const [responses, setResponses] = useState({})
-  const [pendingCmds, setPendingCmds] = useState({})
 
   useEffect(() => { fetchAlerts() }, [])
 
@@ -100,38 +97,10 @@ export default function LocationAlerts() {
     try {
       const data = await getPendingAlerts()
       setAlerts(data)
-      const ids = data.map(a => a.id)
-      const laptopIds = data.map(a => a.laptop_id).filter(Boolean)
-      const [resp, cmds] = await Promise.all([
-        getAlertResponses(ids),
-        getPendingPopupCommands(laptopIds),
-      ])
-      setResponses(resp)
-      setPendingCmds(cmds)
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleSendPopup(alert, isResend = false) {
-    if (!alert.laptop_id) {
-      window.alert('Alert ini tidak terhubung ke laptop tertentu.')
-      return
-    }
-    const msg = isResend
-      ? `Kirim ulang popup ke laptop ${alert.hostname}?\n\nCommand popup sebelumnya akan dibatalkan dan diganti dengan yang baru.`
-      : `Kirim popup konfirmasi ke laptop ${alert.hostname}?\n\nUser akan diminta isi alasan via popup wajib di laptop mereka.`
-    if (!confirm(msg)) return
-    setSending(alert.id)
-    try {
-      await sendPopupCommand(alert.laptop_id, alert.id, alert.days_count ?? 7, user?.email ?? '')
-      await fetchAlerts()
-    } catch (err) {
-      window.alert('Gagal kirim popup: ' + err.message)
-    } finally {
-      setSending(null)
     }
   }
 
@@ -170,84 +139,42 @@ export default function LocationAlerts() {
 
         {/* Alert list */}
         <div className="divide-y divide-gray-50">
-          {alerts.map(alert => {
-            const alertResponses = responses[alert.id] || []
-            const pendingCmd = pendingCmds[alert.laptop_id]
-            const popupSent = !!pendingCmd
-            return (
-              <div key={alert.id} className="px-5 py-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-800 m-0">{alert.hostname || '—'}</p>
-                    <p className="text-xs text-gray-500 m-0 mt-0.5">
-                      SSID: <span className="font-mono font-medium text-gray-700">{alert.ssid_detected}</span>
-                      {' · '}{alert.days_count} hari berturut-turut
-                      {' · '}sejak {new Date(alert.first_detected).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleSendPopup(alert, popupSent)}
-                        disabled={sending === alert.id}
-                        title={popupSent ? 'Klik untuk kirim ulang (command lama akan dibatalkan)' : 'Kirim popup ke laptop user'}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
-                        style={{
-                          borderColor: popupSent ? '#FCD34D' : '#FDBA74',
-                          color:       popupSent ? '#B45309' : '#C2410C',
-                          backgroundColor: popupSent ? '#FFFBEB' : 'white',
-                        }}
-                        onMouseEnter={e => { if (sending !== alert.id) e.currentTarget.style.backgroundColor = popupSent ? '#FEF3C7' : '#FFF7ED' }}
-                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = popupSent ? '#FFFBEB' : 'white' }}>
-                        {popupSent ? <Clock size={12} /> : <MessageSquareWarning size={12} />}
-                        {sending === alert.id ? 'Mengirim...' : (popupSent ? 'Send Ulang' : 'Send Popup')}
-                      </button>
-                    )}
-                    <button onClick={() => handleResolve(alert.id, 'dinas')} disabled={resolving === alert.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
-                      style={{ borderColor: '#93C5FD', color: '#1D4ED8', backgroundColor: 'white' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
-                      <Briefcase size={12} /> Dinas
-                    </button>
-                    <button onClick={() => setMutasiAlert(alert)} disabled={resolving === alert.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
-                      style={{ borderColor: '#86EFAC', color: '#16A34A', backgroundColor: 'white' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0FDF4'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
-                      <ArrowRightLeft size={12} /> Mutasi
-                    </button>
-                    <button onClick={() => handleResolve(alert.id, 'diabaikan')} disabled={resolving === alert.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
-                      style={{ borderColor: '#E5E7EB', color: '#6B7280', backgroundColor: 'white' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F9FAFB'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
-                      <EyeOff size={12} /> Abaikan
-                    </button>
-                  </div>
-                </div>
-
-                {/* Riwayat alasan dari user */}
-                {alertResponses.length > 0 && (
-                  <div className="mt-3 ml-1 border-l-2 pl-3 space-y-2" style={{ borderColor: '#FCD34D' }}>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide m-0" style={{ color: '#B45309' }}>
-                      <MessageSquare size={10} className="inline mr-1" />
-                      Feedback User ({alertResponses.length})
-                    </p>
-                    {alertResponses.map(r => (
-                      <div key={r.id} className="rounded-md px-3 py-2" style={{ backgroundColor: '#FFFBEB' }}>
-                        <p className="text-xs text-gray-700 m-0 whitespace-pre-wrap">{r.alasan}</p>
-                        <p className="text-[10px] text-gray-400 m-0 mt-1">
-                          {new Date(r.submitted_at).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {alerts.map(alert => (
+            <div key={alert.id} className="flex items-center justify-between px-5 py-4 gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-800 m-0">{alert.hostname || '—'}</p>
+                <p className="text-xs text-gray-500 m-0 mt-0.5">
+                  SSID: <span className="font-mono font-medium text-gray-700">{alert.ssid_detected}</span>
+                  {' · '}{alert.days_count} hari berturut-turut
+                  {' · '}sejak {new Date(alert.first_detected).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
               </div>
-            )
-          })}
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={() => handleResolve(alert.id, 'dinas')} disabled={resolving === alert.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
+                  style={{ borderColor: '#93C5FD', color: '#1D4ED8', backgroundColor: 'white' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
+                  <Briefcase size={12} /> Dinas
+                </button>
+                <button onClick={() => setMutasiAlert(alert)} disabled={resolving === alert.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
+                  style={{ borderColor: '#86EFAC', color: '#16A34A', backgroundColor: 'white' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0FDF4'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
+                  <ArrowRightLeft size={12} /> Mutasi
+                </button>
+                <button onClick={() => handleResolve(alert.id, 'diabaikan')} disabled={resolving === alert.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
+                  style={{ borderColor: '#E5E7EB', color: '#6B7280', backgroundColor: 'white' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
+                  <EyeOff size={12} /> Abaikan
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
