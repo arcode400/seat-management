@@ -392,31 +392,35 @@ async function handleShowPopup(cmd) {
     .update({ status: 'executing', executed_at: new Date().toISOString() })
     .eq('id', cmd.id)
 
-  const { spawn } = require('child_process')
   popupRunning = true
-  const ps = spawn('powershell.exe', [
-    '-NoProfile', '-ExecutionPolicy', 'Bypass',
-    '-File', scriptPath,
-    '-AlertId', alertId,
-    '-LaptopId', cachedLaptopId,
-    '-DaysOutside', String(daysOutside),
-    '-SupabaseUrl', process.env.SUPABASE_URL,
-    '-SupabaseKey', process.env.SUPABASE_ANON_KEY,
-  ], { detached: false, windowsHide: true })
 
-  ps.on('exit', async (code) => {
-    popupRunning = false
-    if (code === 0) {
-      await markCommand(cmd.id, 'executed', 'Popup ditutup oleh user')
-      console.log('[Popup] Selesai.')
-    } else {
-      await markCommand(cmd.id, 'failed', `PowerShell exit code ${code}`)
-    }
-  })
-  ps.on('error', async (err) => {
-    popupRunning = false
-    await markCommand(cmd.id, 'failed', err.message)
-  })
+  // Bikin wrapper .ps1 yang panggil popup-alert.ps1 dengan param hardcoded.
+  // Ini agar schtasks bisa menjalankan tanpa pusing escape quotes panjang.
+  const tmpWrapper = path.join(__dirname, `tmp-popup-${cmd.id}.ps1`)
+  const wrapperBody = `& "${scriptPath}" -AlertId "${alertId}" -LaptopId "${cachedLaptopId}" -DaysOutside ${daysOutside} -SupabaseUrl "${process.env.SUPABASE_URL}" -SupabaseKey "${process.env.SUPABASE_ANON_KEY}"`
+  fs.writeFileSync(tmpWrapper, wrapperBody, 'utf8')
+
+  const taskName = `SeatPopup_${cmd.id.replace(/-/g, '').slice(0, 16)}`
+  const trCmd = `powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ${tmpWrapper}`
+
+  try {
+    // Buat scheduled task yang run as INTERACTIVE user (bypass Session 0 isolation).
+    // /ru INTERACTIVE = jalan di session user yang lagi login, bukan SYSTEM.
+    execSync(`schtasks /create /tn "${taskName}" /tr "${trCmd}" /sc once /st 23:59 /ru INTERACTIVE /f`, { windowsHide: true, stdio: 'ignore' })
+    execSync(`schtasks /run /tn "${taskName}"`, { windowsHide: true, stdio: 'ignore' })
+    await markCommand(cmd.id, 'executed', 'Popup triggered di session user via schtasks')
+    console.log('[Popup] Triggered di session user.')
+  } catch (err) {
+    await markCommand(cmd.id, 'failed', `schtasks: ${err.message}`)
+    console.error('[Popup] Gagal:', err.message)
+  } finally {
+    // Cleanup task & wrapper file setelah 30 detik (kasih waktu PS sempat baca file)
+    setTimeout(() => {
+      try { execSync(`schtasks /delete /tn "${taskName}" /f`, { windowsHide: true, stdio: 'ignore' }) } catch {}
+      try { fs.unlinkSync(tmpWrapper) } catch {}
+      popupRunning = false
+    }, 30000)
+  }
 }
 
 // ─── AUTO UPDATE ──────────────────────────────────────────────────────────────
