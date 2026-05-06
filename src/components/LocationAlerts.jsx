@@ -115,12 +115,15 @@ export default function LocationAlerts() {
     }
   }
 
-  async function handleSendPopup(alert) {
+  async function handleSendPopup(alert, isResend = false) {
     if (!alert.laptop_id) {
       window.alert('Alert ini tidak terhubung ke laptop tertentu.')
       return
     }
-    if (!confirm(`Kirim popup konfirmasi ke laptop ${alert.hostname}?\n\nUser akan diminta isi alasan via popup wajib di laptop mereka.`)) return
+    const msg = isResend
+      ? `Kirim ulang popup ke laptop ${alert.hostname}?\n\nCommand popup sebelumnya akan dibatalkan dan diganti dengan yang baru.`
+      : `Kirim popup konfirmasi ke laptop ${alert.hostname}?\n\nUser akan diminta isi alasan via popup wajib di laptop mereka.`
+    if (!confirm(msg)) return
     setSending(alert.id)
     try {
       await sendPopupCommand(alert.laptop_id, alert.id, alert.days_count ?? 7, user?.email ?? '')
@@ -186,18 +189,19 @@ export default function LocationAlerts() {
                   <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                     {isAdmin && (
                       <button
-                        onClick={() => handleSendPopup(alert)}
-                        disabled={sending === alert.id || popupSent}
+                        onClick={() => handleSendPopup(alert, popupSent)}
+                        disabled={sending === alert.id}
+                        title={popupSent ? 'Klik untuk kirim ulang (command lama akan dibatalkan)' : 'Kirim popup ke laptop user'}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
                         style={{
                           borderColor: popupSent ? '#FCD34D' : '#FDBA74',
                           color:       popupSent ? '#B45309' : '#C2410C',
                           backgroundColor: popupSent ? '#FFFBEB' : 'white',
                         }}
-                        onMouseEnter={e => { if (!popupSent && sending !== alert.id) e.currentTarget.style.backgroundColor = '#FFF7ED' }}
-                        onMouseLeave={e => { if (!popupSent) e.currentTarget.style.backgroundColor = 'white' }}>
+                        onMouseEnter={e => { if (sending !== alert.id) e.currentTarget.style.backgroundColor = popupSent ? '#FEF3C7' : '#FFF7ED' }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = popupSent ? '#FFFBEB' : 'white' }}>
                         {popupSent ? <Clock size={12} /> : <MessageSquareWarning size={12} />}
-                        {popupSent ? 'Popup Terkirim' : (sending === alert.id ? 'Mengirim...' : 'Send Popup')}
+                        {sending === alert.id ? 'Mengirim...' : (popupSent ? 'Send Ulang' : 'Send Popup')}
                       </button>
                     )}
                     <button onClick={() => handleResolve(alert.id, 'dinas')} disabled={resolving === alert.id}

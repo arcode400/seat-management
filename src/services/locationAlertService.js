@@ -27,6 +27,14 @@ export async function updateLaptopLocation(laptopId, location) {
 }
 
 export async function sendPopupCommand(laptopId, alertId, daysOutside, requestedBy) {
+  // Cancel command lama yang masih pending/executing biar gak nyampe ke agent
+  await supabase
+    .from('agent_commands')
+    .update({ status: 'cancelled', result: 'Dibatalkan karena ada send popup baru' })
+    .eq('laptop_id', laptopId)
+    .eq('command_type', 'show_popup')
+    .in('status', ['pending', 'executing'])
+
   const { error } = await supabase
     .from('agent_commands')
     .insert({
