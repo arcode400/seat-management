@@ -36,9 +36,13 @@ if not exist ".env" (
     exit /b 1
 )
 
-:: Cek Node.js
-node -v >nul 2>&1
-if %errorlevel% neq 0 (
+:: Cek Node.js — pakai file-exists check dulu (lebih reliable dari PATH lookup)
+set "NODE_EXE="
+if exist "C:\Program Files\nodejs\node.exe" set "NODE_EXE=C:\Program Files\nodejs\node.exe"
+if not defined NODE_EXE if exist "C:\Program Files (x86)\nodejs\node.exe" set "NODE_EXE=C:\Program Files (x86)\nodejs\node.exe"
+if not defined NODE_EXE for /f "delims=" %%i in ('where node 2^>nul') do set "NODE_EXE=%%i"
+
+if not defined NODE_EXE (
     echo [INFO] Node.js belum terinstall. Menginstall otomatis...
     echo.
 
@@ -69,12 +73,15 @@ if %errorlevel% neq 0 (
     for /f "tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "PATH=%%b"
     set "PATH=C:\Program Files\nodejs\;%PATH%"
 
-    :: Verifikasi
-    node -v >nul 2>&1
-    if %errorlevel% neq 0 (
+    :: Verifikasi — pakai file check langsung (bukan dari PATH yang mungkin belum refresh)
+    if exist "C:\Program Files\nodejs\node.exe" (
+        set "NODE_EXE=C:\Program Files\nodejs\node.exe"
+    ) else if exist "C:\Program Files (x86)\nodejs\node.exe" (
+        set "NODE_EXE=C:\Program Files (x86)\nodejs\node.exe"
+    ) else (
         echo.
-        echo [INFO] Node.js sudah terinstall tapi perlu buka CMD baru.
-        echo Tutup window ini, buka CMD admin baru, lalu jalankan setup.bat lagi.
+        echo [ERROR] Node.js install kelihatannya gagal.
+        echo Coba install manual dari https://nodejs.org/, lalu jalankan setup.bat lagi.
         pause
         exit /b 1
     )
@@ -82,9 +89,7 @@ if %errorlevel% neq 0 (
     echo.
 )
 
-:: Tampilkan versi Node.js
-for /f "delims=" %%i in ('where node') do set NODE_PATH=%%i
-echo [OK] Node.js: %NODE_PATH%
+echo [OK] Node.js: %NODE_EXE%
 echo.
 
 :: Siapkan folder C:\SeatAgent
@@ -99,10 +104,13 @@ copy /y "%~dp0install-service.js" "%INSTALL_DIR%\install-service.js" >nul
 echo [OK] File disalin ke %INSTALL_DIR%
 echo.
 
-:: Install dependencies
+:: Install dependencies — pakai full path npm biar gak bergantung PATH
+set "NPM_CMD=C:\Program Files\nodejs\npm.cmd"
+if not exist "%NPM_CMD%" set "NPM_CMD=npm"
+
 echo Menginstall dependencies...
 cd /d "%INSTALL_DIR%"
-call npm install
+call "%NPM_CMD%" install
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] npm install gagal. Cek koneksi internet dan coba lagi.
@@ -116,9 +124,9 @@ reg delete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "SeatManageme
 reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "SeatManagementAgent" /f >nul 2>&1
 schtasks /delete /tn "SeatManagementAgent" /f >nul 2>&1
 
-:: Install Windows Service
+:: Install Windows Service — pakai NODE_EXE yang udah dideteksi
 echo Menginstall Windows Service...
-node install-service.js
+"%NODE_EXE%" install-service.js
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] Gagal install Windows Service.
