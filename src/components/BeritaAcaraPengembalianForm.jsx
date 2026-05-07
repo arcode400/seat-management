@@ -120,9 +120,13 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
     }
   }, [laptops, bastList, initialSn])
 
+  // Field yang TIDAK di-uppercase (tanggal, dll)
+  const NO_UPPERCASE = new Set(['tanggal'])
+
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
+    const { name, value, type } = e.target
+    const newValue = (type === 'date' || NO_UPPERCASE.has(name)) ? value : value.toUpperCase()
+    setForm(f => ({ ...f, [name]: newValue }))
     setError(null)
   }
 
@@ -242,7 +246,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
     }
   }
 
-  const inputClass = 'w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg text-gray-800 placeholder-gray-300 bg-gray-50 focus:bg-white focus:outline-none transition-colors'
+  const inputClass = 'w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg text-gray-800 placeholder-gray-300 bg-gray-50 focus:bg-white focus:outline-none transition-colors uppercase'
   const focus = {
     onFocus: e => { e.target.style.borderColor = '#0D47A1'; e.target.style.backgroundColor = 'white' },
     onBlur:  e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.backgroundColor = '#F9FAFB' },

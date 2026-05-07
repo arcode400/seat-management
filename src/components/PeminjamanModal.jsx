@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { getAppConfig } from '../services/appConfigService'
 import SignaturePad from './SignaturePad'
 
-const inputClass = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none transition-colors'
+const inputClass = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none transition-colors uppercase'
 const focus = {
   onFocus: e => { e.target.style.borderColor = '#0D47A1'; e.target.style.backgroundColor = 'white' },
   onBlur:  e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.backgroundColor = '#F9FAFB' },
@@ -61,9 +61,13 @@ export default function PeminjamanModal({ asset, onClose, onSuccess }) {
     }).catch(() => {})
   }, [])
 
+  // Field yang TIDAK di-uppercase (email, tanggal, dll)
+  const NO_UPPERCASE = new Set(['tanggal'])
+
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
+    const { name, value, type } = e.target
+    const newValue = (type === 'date' || NO_UPPERCASE.has(name)) ? value : value.toUpperCase()
+    setForm(f => ({ ...f, [name]: newValue }))
   }
 
   async function handleSubmit(e) {
