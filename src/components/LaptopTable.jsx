@@ -44,9 +44,23 @@ function StatusBadge({ status }) {
   )
 }
 
-function LocationBadge({ wifi_ssid }) {
+function LocationBadge({ wifi_ssid, isOffline }) {
   if (!wifi_ssid) return <span className="text-gray-300 text-xs">—</span>
   const isOffice = wifi_ssid === OFFICE_WIFI
+
+  // Kalau offline, data SSID itu rekaman terakhir — tampilkan abu-abu + prefix "Terakhir"
+  if (isOffline) {
+    return (
+      <span
+        className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+        style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
+        title="Status WiFi terakhir terdeteksi sebelum laptop offline"
+      >
+        Terakhir {isOffice ? 'di Kantor' : 'di Luar'}
+      </span>
+    )
+  }
+
   return (
     <span
       className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
@@ -404,14 +418,25 @@ export default function LaptopTable() {
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{laptop.serial_number ?? <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{laptop.brand_type ?? <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3 text-gray-600">{user ?? <span className="text-gray-300">—</span>}</td>
-                    <td className="px-4 py-3"><StatusBadge status={status} /></td>
+                    <td
+                      className="px-4 py-3"
+                      title={status === 'Offline' && laptop.last_seen ? `Terakhir online: ${formatLastSeen(laptop.last_seen)}` : ''}
+                    >
+                      <StatusBadge status={status} />
+                    </td>
                     <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{formatLastSeen(laptop.last_seen)}</td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{laptop.ip_address ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                       {laptop.city && laptop.country ? `${laptop.city}, ${laptop.country}` : '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{laptop.wifi_ssid ?? '-'}</td>
-                    <td className="px-4 py-3"><LocationBadge wifi_ssid={laptop.wifi_ssid} /></td>
+                    <td
+                      className="px-4 py-3 text-xs"
+                      style={{ color: status === 'Offline' ? '#9CA3AF' : '#6B7280', fontStyle: status === 'Offline' ? 'italic' : 'normal' }}
+                      title={status === 'Offline' ? 'WiFi terakhir terdeteksi (laptop sekarang offline)' : ''}
+                    >
+                      {laptop.wifi_ssid ?? '-'}
+                    </td>
+                    <td className="px-4 py-3"><LocationBadge wifi_ssid={laptop.wifi_ssid} isOffline={status === 'Offline'} /></td>
                   </tr>
                 )
               })
