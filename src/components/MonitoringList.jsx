@@ -4,6 +4,15 @@ import { getActiveBorrows } from '../services/transactionService'
 import MonitoringMap from './MonitoringMap'
 
 const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000 // 10 menit
+const OFFICE_WIFI = import.meta.env.VITE_OFFICE_WIFI
+const OFFICE_IPS = (import.meta.env.VITE_OFFICE_IP ?? '')
+  .split(',').map(s => s.trim()).filter(Boolean)
+
+function isOfficeLocation({ wifi_ssid, ip_address }) {
+  if (wifi_ssid && wifi_ssid === OFFICE_WIFI) return true
+  if (ip_address && OFFICE_IPS.includes(ip_address)) return true
+  return false
+}
 
 // Pastikan timestamp dari Supabase selalu diparsing sebagai UTC
 function toUTC(ts) {
@@ -130,15 +139,19 @@ export default function MonitoringList() {
                 <td style={{ fontSize: '13px' }}>{laptop.city ?? '-'}</td>
                 <td style={{ fontSize: '13px' }}>{laptop.country ?? '-'}</td>
                 <td style={{ fontSize: '13px' }}>{laptop.wifi_ssid ?? '-'}</td>
-                <td style={{
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  color: laptop.wifi_ssid === import.meta.env.VITE_OFFICE_WIFI ? 'green' : 'orange'
-                }}>
-                  {laptop.wifi_ssid
-                    ? (laptop.wifi_ssid === import.meta.env.VITE_OFFICE_WIFI ? 'Di Kantor' : 'Di Luar')
-                    : '-'}
-                </td>
+                {(() => {
+                  const hasSignal = laptop.wifi_ssid || (laptop.ip_address && OFFICE_IPS.length > 0)
+                  const isOffice = isOfficeLocation(laptop)
+                  return (
+                    <td style={{
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      color: isOffice ? 'green' : (hasSignal ? 'orange' : 'inherit'),
+                    }}>
+                      {hasSignal ? (isOffice ? 'Di Kantor' : 'Di Luar') : '-'}
+                    </td>
+                  )
+                })()}
                 <td style={{ fontFamily: 'monospace' }}>
                   {online ? formatUptime(laptop.boot_time, now) : '-'}
                 </td>

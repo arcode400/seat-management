@@ -5,6 +5,14 @@ import { getActiveBorrows } from '../services/transactionService'
 
 const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000
 const OFFICE_WIFI = import.meta.env.VITE_OFFICE_WIFI
+const OFFICE_IPS = (import.meta.env.VITE_OFFICE_IP ?? '')
+  .split(',').map(s => s.trim()).filter(Boolean)
+
+function isOfficeLocation({ wifi_ssid, ip_address }) {
+  if (wifi_ssid && wifi_ssid === OFFICE_WIFI) return true
+  if (ip_address && OFFICE_IPS.includes(ip_address)) return true
+  return false
+}
 const PAGE_SIZE = 10
 
 function toUTC(ts) {
@@ -44,9 +52,10 @@ function StatusBadge({ status }) {
   )
 }
 
-function LocationBadge({ wifi_ssid, isOffline }) {
-  if (!wifi_ssid) return <span className="text-gray-300 text-xs">—</span>
-  const isOffice = wifi_ssid === OFFICE_WIFI
+function LocationBadge({ wifi_ssid, ip_address, isOffline }) {
+  const hasSignal = wifi_ssid || (ip_address && OFFICE_IPS.length > 0)
+  if (!hasSignal) return <span className="text-gray-300 text-xs">—</span>
+  const isOffice = isOfficeLocation({ wifi_ssid, ip_address })
 
   // Kalau offline, data SSID itu rekaman terakhir — tampilkan abu-abu + prefix "Terakhir"
   if (isOffline) {
@@ -312,7 +321,8 @@ export default function LaptopTable() {
     const rows = filtered.map(l => {
       const user = l.user_name ?? '-'
       const status = getLaptopStatus(l, now)
-      const lokasi = l.wifi_ssid ? (l.wifi_ssid === OFFICE_WIFI ? 'Di Kantor' : 'Di Luar') : '-'
+      const hasSignal = l.wifi_ssid || (l.ip_address && OFFICE_IPS.length > 0)
+      const lokasi = hasSignal ? (isOfficeLocation(l) ? 'Di Kantor' : 'Di Luar') : '-'
       return [l.hostname ?? '-', l.serial_number ?? '-', l.brand_type ?? '-', user, status, formatLastSeen(l.last_seen), l.ip_address ?? '-', l.city ?? '-', l.country ?? '-', l.wifi_ssid ?? '-', lokasi]
         .map(v => `"${String(v).replace(/"/g, '""')}"`)
         .join(',')
@@ -436,7 +446,7 @@ export default function LaptopTable() {
                     >
                       {laptop.wifi_ssid ?? '-'}
                     </td>
-                    <td className="px-4 py-3"><LocationBadge wifi_ssid={laptop.wifi_ssid} isOffline={status === 'Offline'} /></td>
+                    <td className="px-4 py-3"><LocationBadge wifi_ssid={laptop.wifi_ssid} ip_address={laptop.ip_address} isOffline={status === 'Offline'} /></td>
                   </tr>
                 )
               })
