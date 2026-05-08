@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.2.0'
+const CURRENT_VERSION = '1.3.0'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 // Popup ditangani oleh popup-watcher.js (jalan di session user).
@@ -462,19 +462,67 @@ async function ensurePopupWatcherInstalled() {
 }
 
 // ─── AUTO UPDATE ──────────────────────────────────────────────────────────────
+function getLocalWatcherVersion() {
+  try {
+    const p = path.join(__dirname, 'popup-watcher.js')
+    if (!fs.existsSync(p)) return null
+    const src = fs.readFileSync(p, 'utf8')
+    const m = src.match(/WATCHER_VERSION\s*=\s*['"]([^'"]+)['"]/)
+    return m ? m[1] : null
+  } catch { return null }
+}
+
+async function downloadFile(remoteName, destPath) {
+  const url = `${process.env.SUPABASE_URL}/storage/v1/object/public/agent-updates/${remoteName}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status} saat download ${remoteName}`)
+  const text = await res.text()
+  fs.writeFileSync(destPath, text, 'utf8')
+}
+
+async function updatePopupWatcher(remoteVersion) {
+  if (platform !== 'win32') return // popup watcher khusus Windows
+  const localVersion = getLocalWatcherVersion()
+  if (localVersion === remoteVersion) return
+
+  console.log(`[Update] popup-watcher.js: ${localVersion ?? '(none)'} → ${remoteVersion}. Mengunduh...`)
+  const watcherPath = path.join(__dirname, 'popup-watcher.js')
+
+  // Stop task dulu biar file gak di-lock
+  try { execSync('schtasks /end /tn "SeatManagementPopupWatcher"', { stdio: 'pipe' }) } catch {}
+  await new Promise(r => setTimeout(r, 800))
+
+  await downloadFile('popup-watcher.js', watcherPath)
+  console.log('[Update] popup-watcher.js berhasil di-update.')
+
+  // Restart task
+  try {
+    execSync('schtasks /run /tn "SeatManagementPopupWatcher"', { stdio: 'pipe' })
+    console.log('[Update] Popup watcher di-restart.')
+  } catch (err) {
+    console.error('[Update] Gagal restart popup watcher:', err.message)
+  }
+}
+
 async function checkUpdate() {
   try {
-    const { data, error } = await supabase.from('agent_config').select('version').single()
+    const { data, error } = await supabase
+      .from('agent_config')
+      .select('version, popup_watcher_version')
+      .single()
     if (error || !data) return
+
+    // Update popup watcher dulu (gak butuh restart self)
+    if (data.popup_watcher_version) {
+      try { await updatePopupWatcher(data.popup_watcher_version) }
+      catch (err) { console.error('[Update] popup watcher gagal:', err.message) }
+    }
+
+    // Update monitor.js sendiri (terakhir, karena akan restart self)
     if (data.version === CURRENT_VERSION) return
 
-    console.log(`[Update] Versi baru tersedia (${data.version}). Mengunduh...`)
-    const url = `${process.env.SUPABASE_URL}/storage/v1/object/public/agent-updates/monitor.js`
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-
-    const newScript = await res.text()
-    fs.writeFileSync(__filename, newScript, 'utf8')
+    console.log(`[Update] monitor.js: ${CURRENT_VERSION} → ${data.version}. Mengunduh...`)
+    await downloadFile('monitor.js', __filename)
     console.log('[Update] Berhasil diunduh. Restart otomatis...')
     const { spawn } = require('child_process')
     const child = spawn(process.execPath, [__filename], {

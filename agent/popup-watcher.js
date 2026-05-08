@@ -10,7 +10,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { spawn } = require('child_process')
 
-const WATCHER_VERSION = '1.0.0'
+const WATCHER_VERSION = '1.1.0'
 const POLL_INTERVAL_MS = 30 * 1000
 const COMMAND_MAX_AGE_MS = 60 * 60 * 1000 // 1 jam — command lebih lama dianggap expired
 
