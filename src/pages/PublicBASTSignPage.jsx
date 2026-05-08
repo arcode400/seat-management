@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { AlertCircle, CheckCircle2, FileText, Laptop } from 'lucide-react'
+import { AlertCircle, CheckCircle2, FileText, Laptop, ScrollText } from 'lucide-react'
 import SignaturePad from '../components/SignaturePad'
 
 export default function PublicBASTSignPage() {
@@ -125,6 +125,43 @@ export default function PublicBASTSignPage() {
             <InfoRow label="Kode Aset"     value={bast.kode_aset || '—'}     mono />
             <InfoRow label="Merek / Tipe"  value={bast.nama_perangkat || '—'} />
           </div>
+        </div>
+
+        {/* Ketentuan Peminjaman */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <ScrollText size={18} className="text-blue-600" />
+            <p className="text-sm font-bold text-gray-800 m-0">Ketentuan Peminjaman</p>
+          </div>
+          <p className="text-xs text-gray-500 mb-3 m-0">
+            Dengan menandatangani Berita Acara Serah Terima ini, Anda menyatakan setuju dengan
+            ketentuan berikut:
+          </p>
+          <ol className="text-sm text-gray-700 pl-5 space-y-2 m-0" style={{ listStyleType: 'upper-alpha' }}>
+            <li>
+              Pihak <strong>PERTAMA</strong> (IT Support) menyerahkan 1 (satu) unit perangkat
+              {bast?.nama_perangkat ? <> <strong>{bast.nama_perangkat}</strong></> : null} kepada
+              pihak <strong>KEDUA</strong> sesuai spesifikasi yang tercantum.
+            </li>
+            <li>
+              Perangkat diperuntukkan untuk kegiatan perkantoran administratif/operasional.
+              Penggunaan <strong>melekat pada Jabatan</strong> dan <strong>bukan hak milik pribadi</strong>.
+            </li>
+            <li>
+              Pihak <strong>KEDUA</strong> wajib menggunakan perangkat secara normal,
+              <strong> tidak diperkenankan menginstal aplikasi tanpa lisensi</strong>, dan tidak
+              melakukan upgrade tanpa sepengetahuan unit Technology &amp; Innovation Group.
+            </li>
+            <li>
+              Pihak <strong>KEDUA</strong> wajib menjaga perangkat dari kerusakan/kehilangan.
+              Kehilangan atau kerusakan akibat penggunaan tidak sesuai pengoperasian menjadi
+              <strong> tanggung jawab pihak KEDUA</strong>.
+            </li>
+            <li>
+              Pihak <strong>KEDUA</strong> wajib <strong>mengembalikan perangkat</strong> kepada TI
+              Group apabila dimutasi, dengan menandatangani Berita Acara Pengembalian Perangkat.
+            </li>
+          </ol>
         </div>
 
         {/* Form */}
