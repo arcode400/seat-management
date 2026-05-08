@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.3.0'
+const CURRENT_VERSION = '1.4.0'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 // Popup ditangani oleh popup-watcher.js (jalan di session user).
@@ -339,7 +339,14 @@ async function logDailySSID(ssid) {
 
 const POPUP_TASK_NAME = 'SeatManagementPopupWatcher'
 
-function popupWatcherTaskXml(nodePath, watcherScriptPath, workingDir) {
+const WATCHER_VBS_CONTENT = `' Jalankan popup-watcher.js dari C:\\SeatAgent tanpa menampilkan jendela terminal
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "cmd /c cd /d ""C:\\SeatAgent"" && node popup-watcher.js", 0, False
+`
+
+function popupWatcherTaskXml(_nodePath, _watcherScriptPath, workingDir) {
+  // Pakai wscript.exe + VBS biar console window gak nongol ke user setiap watcher start
+  const vbsPath = path.join(workingDir, 'start-watcher-hidden.vbs')
   return `<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
@@ -376,8 +383,8 @@ function popupWatcherTaskXml(nodePath, watcherScriptPath, workingDir) {
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>${nodePath}</Command>
-      <Arguments>"${watcherScriptPath}"</Arguments>
+      <Command>wscript.exe</Command>
+      <Arguments>"${vbsPath}"</Arguments>
       <WorkingDirectory>${workingDir}</WorkingDirectory>
     </Exec>
   </Actions>
@@ -412,6 +419,7 @@ async function ensurePopupWatcherInstalled() {
 
   const watcherScriptPath = path.join(__dirname, 'popup-watcher.js')
   const watcherXmlPath    = path.join(__dirname, 'popup-task.xml')
+  const watcherVbsPath    = path.join(__dirname, 'start-watcher-hidden.vbs')
 
   // 1. Download popup-watcher.js dari Supabase Storage kalau belum ada
   if (!fs.existsSync(watcherScriptPath)) {
@@ -430,14 +438,29 @@ async function ensurePopupWatcherInstalled() {
     }
   }
 
-  // 2. Cek apakah task sudah ada
+  // 1b. Pastikan start-watcher-hidden.vbs ada (launcher tanpa console window)
+  if (!fs.existsSync(watcherVbsPath)) {
+    fs.writeFileSync(watcherVbsPath, WATCHER_VBS_CONTENT, 'utf8')
+    console.log('[Bootstrap] start-watcher-hidden.vbs dibuat.')
+  }
+
+  // 2. Cek apakah task sudah ada DAN sudah pakai launcher VBS (tanpa console)
   let taskExists = false
+  let taskUsesVbs = false
   try {
     execSync(`schtasks /query /tn "${POPUP_TASK_NAME}"`, { stdio: 'pipe', windowsHide: true })
     taskExists = true
+    try {
+      const xmlOut = execSync(`schtasks /query /tn "${POPUP_TASK_NAME}" /xml`, { windowsHide: true }).toString()
+      taskUsesVbs = /wscript\.exe/i.test(xmlOut) && /start-watcher-hidden\.vbs/i.test(xmlOut)
+    } catch {}
   } catch { taskExists = false }
 
-  if (taskExists) return // sudah beres
+  if (taskExists && taskUsesVbs) return // sudah beres
+  if (taskExists && !taskUsesVbs) {
+    console.log('[Bootstrap] Task lama pakai node.exe direct (console nongol). Re-register pakai VBS launcher...')
+    try { execSync(`schtasks /delete /tn "${POPUP_TASK_NAME}" /f`, { stdio: 'pipe', windowsHide: true }) } catch {}
+  }
 
   // 3. Register task popup watcher
   console.log('[Bootstrap] Task popup watcher belum ada, mendaftarkan...')

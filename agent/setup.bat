@@ -101,6 +101,10 @@ copy /y "%~dp0monitor.js"        "%INSTALL_DIR%\monitor.js"        >nul
 copy /y "%~dp0.env"              "%INSTALL_DIR%\.env"              >nul
 copy /y "%~dp0package.json"      "%INSTALL_DIR%\package.json"      >nul
 copy /y "%~dp0install-service.js" "%INSTALL_DIR%\install-service.js" >nul
+if exist "%~dp0popup-watcher.js"          copy /y "%~dp0popup-watcher.js"          "%INSTALL_DIR%\popup-watcher.js"          >nul
+if exist "%~dp0popup-alert.ps1"           copy /y "%~dp0popup-alert.ps1"           "%INSTALL_DIR%\popup-alert.ps1"           >nul
+if exist "%~dp0start-hidden.vbs"          copy /y "%~dp0start-hidden.vbs"          "%INSTALL_DIR%\start-hidden.vbs"          >nul
+if exist "%~dp0start-watcher-hidden.vbs"  copy /y "%~dp0start-watcher-hidden.vbs"  "%INSTALL_DIR%\start-watcher-hidden.vbs"  >nul
 echo [OK] File disalin ke %INSTALL_DIR%
 echo.
 

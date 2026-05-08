@@ -8,6 +8,7 @@ const INSTALL_DIR       = 'C:\\SeatAgent'
 const nodePath          = process.execPath
 const scriptPath        = path.join(INSTALL_DIR, 'monitor.js')
 const watcherScriptPath = path.join(INSTALL_DIR, 'popup-watcher.js')
+const watcherVbsPath    = path.join(INSTALL_DIR, 'start-watcher-hidden.vbs')
 const xmlPath           = path.join(INSTALL_DIR, 'task.xml')
 const popupXmlPath      = path.join(INSTALL_DIR, 'popup-task.xml')
 
@@ -88,8 +89,8 @@ const popupXml = `<?xml version="1.0" encoding="UTF-16"?>
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>${nodePath}</Command>
-      <Arguments>"${watcherScriptPath}"</Arguments>
+      <Command>wscript.exe</Command>
+      <Arguments>"${watcherVbsPath}"</Arguments>
       <WorkingDirectory>${INSTALL_DIR}</WorkingDirectory>
     </Exec>
   </Actions>
