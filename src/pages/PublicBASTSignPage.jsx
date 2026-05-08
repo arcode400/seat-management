@@ -13,6 +13,7 @@ export default function PublicBASTSignPage() {
   const [submitted, setSubmitted]   = useState(false)
 
   const [confirmCheck, setConfirmCheck] = useState(false)
+  const [readCheck, setReadCheck] = useState(false)
   const [form, setForm] = useState({ nama: '', nip: '', jabatan: '', unit: '', signature: null })
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function PublicBASTSignPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (!readCheck)          { alert('Centang konfirmasi sudah membaca Berita Acara terlebih dahulu.'); return }
     if (!confirmCheck)       { alert('Centang konfirmasi laptop terlebih dahulu.'); return }
     if (!form.nama.trim())   { alert('Nama wajib diisi.'); return }
     if (!form.jabatan.trim()){ alert('Jabatan wajib diisi.'); return }
@@ -185,22 +187,45 @@ export default function PublicBASTSignPage() {
               placeholder="Opsional" className={inputClass} />
           </Field>
 
-          <SignaturePad
-            label="Tanda Tangan"
-            value={form.signature}
-            onChange={sig => setForm(f => ({ ...f, signature: sig }))}
-          />
-
           <label className="flex items-start gap-2 p-3 rounded-lg cursor-pointer transition-colors"
-            style={{ backgroundColor: confirmCheck ? '#DCFCE7' : '#F3F4F6' }}>
-            <input type="checkbox" checked={confirmCheck}
-              onChange={e => setConfirmCheck(e.target.checked)}
+            style={{ backgroundColor: readCheck ? '#DCFCE7' : '#F3F4F6' }}>
+            <input type="checkbox" checked={readCheck}
+              onChange={e => setReadCheck(e.target.checked)}
               className="mt-0.5 cursor-pointer" />
             <span className="text-sm text-gray-700">
-              Saya konfirmasi bahwa laptop di atas <strong>sesuai dengan yang saya pegang</strong>,
-              dan saya menerima peminjaman laptop ini.
+              Saya menyatakan telah <strong>membaca dan memahami</strong> isi Berita Acara Serah
+              Terima beserta seluruh ketentuan peminjaman di atas, dan setuju untuk
+              menandatanganinya.
             </span>
           </label>
+
+          {readCheck && (
+            <>
+              <div className="text-xs px-3 py-2.5 rounded-lg border"
+                style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE', color: '#1E3A8A' }}>
+                <strong>Catatan:</strong> Tanda tangan digital pada Berita Acara ini memiliki
+                <strong> kekuatan hukum yang sama</strong> dengan tanda tangan manual di atas
+                kertas, sesuai UU ITE No. 11 Tahun 2008 jo. UU No. 19 Tahun 2016.
+              </div>
+
+              <SignaturePad
+                label="Tanda Tangan"
+                value={form.signature}
+                onChange={sig => setForm(f => ({ ...f, signature: sig }))}
+              />
+
+              <label className="flex items-start gap-2 p-3 rounded-lg cursor-pointer transition-colors"
+                style={{ backgroundColor: confirmCheck ? '#DCFCE7' : '#F3F4F6' }}>
+                <input type="checkbox" checked={confirmCheck}
+                  onChange={e => setConfirmCheck(e.target.checked)}
+                  className="mt-0.5 cursor-pointer" />
+                <span className="text-sm text-gray-700">
+                  Saya konfirmasi bahwa laptop di atas <strong>sesuai dengan yang saya pegang</strong>,
+                  dan saya menerima peminjaman laptop ini.
+                </span>
+              </label>
+            </>
+          )}
 
           {error && (
             <div className="text-sm text-red-600 px-4 py-3 rounded-lg" style={{ backgroundColor: '#FEF2F2' }}>
@@ -210,7 +235,7 @@ export default function PublicBASTSignPage() {
 
           <button
             type="submit"
-            disabled={submitting || !confirmCheck || !form.signature || !form.nama.trim() || !form.jabatan.trim()}
+            disabled={submitting || !readCheck || !confirmCheck || !form.signature || !form.nama.trim() || !form.jabatan.trim()}
             className="w-full px-5 py-3 text-sm font-semibold text-white rounded-xl border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             style={{ backgroundColor: '#0D47A1' }}>
             {submitting ? 'Menyimpan...' : 'Submit Tanda Tangan'}
