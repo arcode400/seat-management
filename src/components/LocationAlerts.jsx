@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { MapPin, Briefcase, ArrowRightLeft, EyeOff, X } from 'lucide-react'
-import { getPendingAlerts, resolveAlert, updateLaptopLocation } from '../services/locationAlertService'
+import { MapPin, Briefcase, ArrowRightLeft, EyeOff, X, Bell, CheckCircle2 } from 'lucide-react'
+import { getPendingAlerts, resolveAlert, updateLaptopLocation, sendPopupCommand, getPendingPopupCommands } from '../services/locationAlertService'
 import { useAuth } from '../context/AuthContext'
 
 function MutasiModal({ alert, onClose, onDone }) {
@@ -89,6 +89,8 @@ export default function LocationAlerts() {
   const [alerts, setAlerts]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [resolving, setResolving] = useState(null)
+  const [sendingPopup, setSendingPopup] = useState(null)
+  const [pendingPopups, setPendingPopups] = useState({})
   const [mutasiAlert, setMutasiAlert] = useState(null)
 
   useEffect(() => { fetchAlerts() }, [])
@@ -97,10 +99,28 @@ export default function LocationAlerts() {
     try {
       const data = await getPendingAlerts()
       setAlerts(data)
+      const popups = await getPendingPopupCommands(data.map(a => a.laptop_id))
+      setPendingPopups(popups)
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleSendPopup(alert) {
+    setSendingPopup(alert.id)
+    try {
+      await sendPopupCommand(alert.laptop_id, alert.id, alert.days_count, user?.email ?? '')
+      // Update local state — tandai ada popup pending untuk laptop ini
+      setPendingPopups(prev => ({
+        ...prev,
+        [alert.laptop_id]: { command_type: 'show_popup', status: 'pending' },
+      }))
+    } catch (err) {
+      window.alert('Gagal kirim popup: ' + err.message)
+    } finally {
+      setSendingPopup(null)
     }
   }
 
@@ -151,6 +171,8 @@ export default function LocationAlerts() {
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Fitur Kirim Popup di-disable sementara — banyak user kebingungan.
+                    Aktifkan kembali setelah expiry & UX improvement. */}
                 <button onClick={() => handleResolve(alert.id, 'dinas')} disabled={resolving === alert.id}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border cursor-pointer disabled:opacity-50 transition-colors"
                   style={{ borderColor: '#93C5FD', color: '#1D4ED8', backgroundColor: 'white' }}
