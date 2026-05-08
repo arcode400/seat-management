@@ -163,6 +163,31 @@ export default function PublicBASTSignPage() {
               Pihak <strong>KEDUA</strong> wajib <strong>mengembalikan perangkat</strong> kepada TI
               Group apabila dimutasi, dengan menandatangani Berita Acara Pengembalian Perangkat.
             </li>
+            <li>
+              Perangkat <strong>tidak boleh dipinjamkan, dialihkan, atau dipakai pihak lain</strong>.
+              Kerusakan/kehilangan akibat penggunaan oleh pihak ketiga tetap menjadi tanggung
+              jawab pihak <strong>KEDUA</strong>.
+            </li>
+            <li>
+              Kerusakan atau kehilangan wajib <strong>dilaporkan ke IT Support paling lambat 1×24
+              jam</strong>. Keterlambatan/kelalaian melapor mengakibatkan biaya perbaikan atau
+              penggantian dibebankan sepenuhnya kepada pihak <strong>KEDUA</strong>.
+            </li>
+            <li>
+              Pihak <strong>KEDUA</strong> wajib mengembalikan perangkat saat <strong>mutasi,
+              resign, atau berakhirnya hubungan kerja</strong>, sebelum proses <em>exit clearance</em>.
+              Perangkat yang belum dikembalikan dapat menahan penyelesaian hak akhir karyawan.
+            </li>
+            <li>
+              Pihak <strong>KEDUA</strong> mengizinkan unit Technology &amp; Innovation Group
+              melakukan <strong>monitoring, remote support, dan inspeksi berkala</strong> terhadap
+              perangkat selama masa peminjaman untuk keperluan keamanan dan dukungan teknis.
+            </li>
+            <li>
+              Seluruh data perusahaan yang tersimpan di perangkat adalah <strong>milik Angkasa
+              Pura Supports</strong>. Dilarang memindahkan atau menyimpan data tersebut ke media
+              pribadi/cloud pribadi tanpa izin tertulis.
+            </li>
           </ol>
         </div>
 
