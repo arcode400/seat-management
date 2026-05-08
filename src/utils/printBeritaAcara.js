@@ -255,59 +255,6 @@ export async function printBeritaAcara(ba) {
     </div>
   </div>
 
-  <!-- Pasal F -->
-  <div class="section">
-    <div class="section-letter">F.</div>
-    <div class="section-body">
-      Perangkat <strong>tidak diperkenankan untuk dipinjamkan, dialihkan, atau digunakan oleh
-      pihak lain</strong>. Kerusakan atau kehilangan akibat penggunaan oleh pihak ketiga tetap
-      menjadi tanggung jawab pihak <strong>KEDUA</strong>.
-    </div>
-  </div>
-
-  <!-- Pasal G -->
-  <div class="section">
-    <div class="section-letter">G.</div>
-    <div class="section-body">
-      Kerusakan atau kehilangan perangkat wajib dilaporkan kepada IT Support
-      <strong>paling lambat 1×24 jam</strong> sejak kejadian. Keterlambatan atau kelalaian
-      melapor mengakibatkan biaya perbaikan/penggantian dibebankan sepenuhnya kepada pihak
-      <strong>KEDUA</strong>.
-    </div>
-  </div>
-
-  <!-- Pasal H -->
-  <div class="section">
-    <div class="section-letter">H.</div>
-    <div class="section-body">
-      Pihak <strong>KEDUA</strong> berkewajiban mengembalikan perangkat dalam hal
-      <strong>mutasi, pengunduran diri (resign), atau berakhirnya hubungan kerja</strong>,
-      sebelum proses <em>exit clearance</em> diselesaikan. Perangkat yang belum dikembalikan
-      dapat menahan penyelesaian hak akhir karyawan.
-    </div>
-  </div>
-
-  <!-- Pasal I -->
-  <div class="section">
-    <div class="section-letter">I.</div>
-    <div class="section-body">
-      Pihak <strong>KEDUA</strong> mengizinkan unit Technology &amp; Innovation Group untuk
-      melakukan <strong>monitoring, remote support, dan inspeksi berkala</strong> terhadap
-      perangkat selama masa peminjaman, untuk keperluan keamanan dan dukungan teknis.
-    </div>
-  </div>
-
-  <!-- Pasal J -->
-  <div class="section">
-    <div class="section-letter">J.</div>
-    <div class="section-body">
-      Seluruh data perusahaan yang tersimpan pada perangkat adalah <strong>milik Angkasa Pura
-      Supports</strong>. Pihak <strong>KEDUA</strong> dilarang memindahkan atau menyimpan data
-      tersebut pada media pribadi atau layanan cloud pribadi tanpa izin tertulis dari unit
-      yang berwenang.
-    </div>
-  </div>
-
   <!-- Penutup -->
   <div class="closing">
     Demikian Tanda Terima ini dibuat dengan sesungguhnya untuk digunakan sebagaimana mestinya.
