@@ -125,7 +125,9 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
 
   function handleChange(e) {
     const { name, value, type } = e.target
-    const newValue = (type === 'date' || NO_UPPERCASE.has(name)) ? value : value.toUpperCase()
+    const isSelect = type === 'select-one' || type === 'select-multiple'
+    const skipUppercase = isSelect || type === 'date' || NO_UPPERCASE.has(name)
+    const newValue = skipUppercase ? value : value.toUpperCase()
     setForm(f => ({ ...f, [name]: newValue }))
     setError(null)
   }
