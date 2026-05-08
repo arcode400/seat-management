@@ -12,6 +12,7 @@ const { spawn } = require('child_process')
 
 const WATCHER_VERSION = '1.0.0'
 const POLL_INTERVAL_MS = 30 * 1000
+const COMMAND_MAX_AGE_MS = 60 * 60 * 1000 // 1 jam — command lebih lama dianggap expired
 
 // Embed popup script base64 supaya watcher self-contained
 // (sama dengan yang ada di monitor.js — sengaja diduplikasi agar tiap proses bisa mandiri)
@@ -118,6 +119,16 @@ async function pollCommands() {
 
     const cmd = commands[0]
     log(`Found pending popup command: ${cmd.id}`)
+
+    // Guard: skip command yang sudah lebih lama dari COMMAND_MAX_AGE_MS
+    // Mencegah popup lama nyamber ke user pas laptop baru boot setelah lama offline
+    const requestedAt = cmd.requested_at ? new Date(cmd.requested_at).getTime() : 0
+    const ageMs = Date.now() - requestedAt
+    if (requestedAt && ageMs > COMMAND_MAX_AGE_MS) {
+      log(`Skip expired command ${cmd.id} (age ${Math.round(ageMs / 60000)} menit)`)
+      await markCommand(cmd.id, 'expired', `Skipped: command lebih dari ${COMMAND_MAX_AGE_MS / 60000} menit`)
+      return
+    }
 
     popupRunning = true
     await markCommand(cmd.id, 'executing', 'Popup watcher picked up command')
