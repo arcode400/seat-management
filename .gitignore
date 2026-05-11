@@ -36,3 +36,8 @@ agent-mac/.env
 *.njsproj
 *.sln
 *.sw?
+
+# Node MSI cache buat build-agent-zip.ps1 (auto-download saat build, jangan commit)
+node-installer.msi
+seat-agent-windows.zip
+seat-agent-mac.zip

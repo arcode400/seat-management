@@ -46,27 +46,55 @@ if not defined NODE_EXE (
     echo [INFO] Node.js belum terinstall. Menginstall otomatis...
     echo.
 
-    :: Coba winget dulu - sudah built-in di Windows 10/11
-    winget --version >nul 2>&1
-    if %errorlevel% equ 0 (
-        echo [INFO] Menginstall Node.js via winget...
-        winget install OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements
+    :: 1. Prioritas tertinggi: pakai node-installer.msi yang udah dibundle di folder ini (offline install)
+    if exist "%~dp0node-installer.msi" (
+        echo [INFO] Pakai installer offline yang dibundle: node-installer.msi
+        echo [INFO] Menjalankan msiexec ^(akan ada UAC popup, klik Yes^)...
+        msiexec /i "%~dp0node-installer.msi" /quiet /norestart
+        if %errorlevel% neq 0 (
+            echo [ERROR] msiexec gagal ^(exit code %errorlevel%^).
+            pause
+            exit /b 1
+        )
     ) else (
-        :: Fallback: download versi LTS terbaru dari nodejs.org
-        echo [INFO] Mengunduh Node.js LTS terbaru ^(perlu koneksi internet^)...
-        (
-            echo $r = Invoke-RestMethod 'https://nodejs.org/dist/index.json'
-            echo $lts = $r ^| Where-Object { $_.lts } ^| Select-Object -First 1
-            echo $v = $lts.version
-            echo $url = "https://nodejs.org/dist/$v/node-$v-x64.msi"
-            echo Write-Host "Mengunduh versi: $v"
-            echo Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\node-installer.msi" -UseBasicParsing
-        ) > "%TEMP%\get-node.ps1"
-        powershell -ExecutionPolicy Bypass -File "%TEMP%\get-node.ps1"
-        del "%TEMP%\get-node.ps1" >nul 2>&1
-        echo [INFO] Menginstall Node.js...
-        msiexec /i "%TEMP%\node-installer.msi" /quiet /norestart
-        del "%TEMP%\node-installer.msi" >nul 2>&1
+        :: 2. Coba winget — built-in di Windows 10/11
+        winget --version >nul 2>&1
+        if %errorlevel% equ 0 (
+            echo [INFO] Menginstall Node.js via winget...
+            winget install OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements
+        ) else (
+            :: 3. Fallback terakhir: download dari nodejs.org ^(butuh internet, kalau diblok proxy bakal gagal^)
+            echo [INFO] Mengunduh Node.js LTS dari internet...
+            echo [INFO] Kalau lambat / stuck di tahap ini, kemungkinan koneksi internet bermasalah atau diblok proxy kantor.
+            echo [INFO] Solusi: minta IT bundle node-installer.msi di folder ini, lalu jalankan setup.bat lagi.
+            echo.
+            (
+                echo $ProgressPreference = 'SilentlyContinue'
+                echo try {
+                echo   $r = Invoke-RestMethod 'https://nodejs.org/dist/index.json' -TimeoutSec 30
+                echo   $lts = $r ^| Where-Object { $_.lts } ^| Select-Object -First 1
+                echo   $v = $lts.version
+                echo   $url = "https://nodejs.org/dist/$v/node-$v-x64.msi"
+                echo   Write-Host "Mengunduh versi: $v"
+                echo   Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\node-installer.msi" -UseBasicParsing -TimeoutSec 300
+                echo } catch {
+                echo   Write-Host "[ERROR] Gagal download: $_" -ForegroundColor Red
+                echo   exit 1
+                echo }
+            ) > "%TEMP%\get-node.ps1"
+            powershell -ExecutionPolicy Bypass -File "%TEMP%\get-node.ps1"
+            if %errorlevel% neq 0 (
+                echo.
+                echo [ERROR] Gagal download Node.js. Kemungkinan koneksi diblok firewall/proxy.
+                echo Solusi: download manual dari https://nodejs.org/, install, lalu jalankan setup.bat lagi.
+                pause
+                exit /b 1
+            )
+            del "%TEMP%\get-node.ps1" >nul 2>&1
+            echo [INFO] Menginstall Node.js...
+            msiexec /i "%TEMP%\node-installer.msi" /quiet /norestart
+            del "%TEMP%\node-installer.msi" >nul 2>&1
+        )
     )
 
     :: Refresh PATH dari registry + tambah nodejs manual

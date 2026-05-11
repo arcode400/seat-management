@@ -6,6 +6,29 @@
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
+# === Pre-download Node.js LTS MSI buat dibundle ke zip Windows ===
+# Cache di root repo biar gak download ulang tiap build
+$nodeMsiPath = Join-Path $root 'node-installer.msi'
+if (-not (Test-Path $nodeMsiPath)) {
+  Write-Host "[..] Download Node.js LTS MSI (sekali aja, di-cache di repo root)..." -ForegroundColor Cyan
+  try {
+    $ProgressPreference = 'SilentlyContinue'
+    $idx = Invoke-RestMethod 'https://nodejs.org/dist/index.json' -TimeoutSec 30
+    $lts = $idx | Where-Object { $_.lts } | Select-Object -First 1
+    $url = "https://nodejs.org/dist/$($lts.version)/node-$($lts.version)-x64.msi"
+    Write-Host "    Versi: $($lts.version)"
+    Invoke-WebRequest -Uri $url -OutFile $nodeMsiPath -UseBasicParsing -TimeoutSec 300
+    $sz = [math]::Round((Get-Item $nodeMsiPath).Length / 1MB, 1)
+    Write-Host "[OK] node-installer.msi tersimpan ($sz MB)" -ForegroundColor Green
+  } catch {
+    Write-Host "[WARN] Gagal download Node MSI: $_" -ForegroundColor Yellow
+    Write-Host "       Build tetap lanjut, tapi user harus punya Node.js dulu / internet aktif." -ForegroundColor Yellow
+  }
+} else {
+  $sz = [math]::Round((Get-Item $nodeMsiPath).Length / 1MB, 1)
+  Write-Host "[OK] node-installer.msi sudah ada di cache ($sz MB)" -ForegroundColor Green
+}
+
 function Build-Zip {
   param(
     [string]$SourceDir,   # nama folder agent (mis. 'agent' / 'agent-mac')
@@ -33,6 +56,12 @@ SUPABASE_ANON_KEY=PASTE_ANON_KEY_DI_SINI
 OFFICE_WIFI=Angkasa Pura Indonesia
 "@
   $envContent | Out-File (Join-Path $temp '.env') -Encoding utf8
+
+  # Bundle Node MSI HANYA buat zip Windows (mac pakai installer beda)
+  if ($SourceDir -eq 'agent' -and (Test-Path $nodeMsiPath)) {
+    Copy-Item $nodeMsiPath (Join-Path $temp 'node-installer.msi') -Force
+    Write-Host "    + node-installer.msi (offline Node installer)"
+  }
 
   # Bersihkan file zip lama kalau ada
   $zipOut = Join-Path $root $OutputZip
