@@ -186,18 +186,30 @@ export default function DashboardCards() {
 
       {/* Row 3: Status Agent */}
       <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
-            Status Agent {stats.latestVersion !== '—' && <span className="text-gray-400 normal-case">— versi terbaru: <strong>v{stats.latestVersion}</strong></span>}
-          </p>
-          <InfoTooltip
-            text={
-              'Terinstall = laptop yang agent-nya pernah ping ke server (kolom agent_version terisi).\n\n' +
-              'Belum Install = laptop yang ke-register tapi agent-nya belum pernah jalan.\n\n' +
-              'Versi Terbaru = jumlah agent yang versi-nya sama dengan agent_config.version di DB.\n\n' +
-              'Perlu Update = agent versi lama, akan auto-update dalam max 1 jam saat laptop online.'
-            }
-          />
+        <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
+              Status Agent {stats.latestVersion !== '—' && <span className="text-gray-400 normal-case">— versi terbaru: <strong>v{stats.latestVersion}</strong></span>}
+            </p>
+            <InfoTooltip
+              text={
+                'Terinstall = laptop yang agent-nya pernah ping ke server (kolom agent_version terisi).\n\n' +
+                'Belum Install = laptop yang ke-register tapi agent-nya belum pernah jalan.\n\n' +
+                'Versi Terbaru = jumlah agent yang versi-nya sama dengan agent_config.version di DB.\n\n' +
+                'Perlu Update = agent versi lama, akan auto-update dalam max 1 jam saat laptop online.'
+              }
+            />
+          </div>
+          <a
+            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent.zip`}
+            download
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
+            style={{ backgroundColor: '#0D47A1', color: 'white' }}
+            title="Download installer agent (zip) — extract di laptop user lalu jalankan setup.bat"
+          >
+            <Download size={14} />
+            Download Installer Agent
+          </a>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Agent Terinstall" value={stats.agentInstalled}
