@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileText, RotateCcw, AlertCircle, Edit3 } from 'lucide-react'
+import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileText, RotateCcw, AlertCircle, Edit3, Cpu, Download, AlertTriangle } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
 import { getAllBAP } from '../services/beritaAcaraPengembalianService'
+import { supabase } from '../lib/supabase'
 import InfoTooltip from './InfoTooltip'
 
 const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
@@ -37,6 +38,8 @@ export default function DashboardCards() {
     total: 0, online: 0, offline: 0,
     normal: 0, perbaikan: 0, dipinjam: 0, tidakAktif: 0,
     bastBulan: 0, bastPending: 0, bapBulan: 0, bapSigned: 0,
+    agentInstalled: 0, agentBelum: 0, agentLatest: 0, agentOutdated: 0,
+    latestVersion: '—',
   })
   const [bastList, setBastList] = useState([])
   const [bapList, setBapList]   = useState([])
@@ -54,15 +57,21 @@ export default function DashboardCards() {
 
   async function fetchStats() {
     try {
-      const [laptops, bastList, bapList] = await Promise.all([
+      const [laptops, bastList, bapList, configRes] = await Promise.all([
         getAllLaptops(),
         getAllBeritaAcara().catch(() => []),
         getAllBAP().catch(() => []),
+        supabase.from('agent_config').select('version').single().then(r => r.data).catch(() => null),
       ])
       const now = Date.now()
       const online = laptops.filter(
         l => l.last_seen && now - toUTC(l.last_seen).getTime() < OFFLINE_THRESHOLD_MS
       ).length
+
+      const latestVersion = configRes?.version ?? null
+      const installed   = laptops.filter(l => l.agent_version)
+      const onLatest    = latestVersion ? installed.filter(l => l.agent_version === latestVersion) : []
+      const outdated    = latestVersion ? installed.filter(l => l.agent_version !== latestVersion) : []
 
       setBastList(bastList)
       setBapList(bapList)
@@ -76,6 +85,11 @@ export default function DashboardCards() {
         perbaikan: laptops.filter(l => l.status === 'maintenance').length,
         dipinjam:  laptops.filter(l => l.status === 'in_use').length,
         tidakAktif: laptops.filter(l => l.status === 'rusak').length,
+        agentInstalled: installed.length,
+        agentBelum:     laptops.length - installed.length,
+        agentLatest:    onLatest.length,
+        agentOutdated:  outdated.length,
+        latestVersion:  latestVersion ?? '—',
       }))
     } catch (err) {
       console.error(err)
@@ -170,7 +184,38 @@ export default function DashboardCards() {
         </div>
       </div>
 
-      {/* Row 3: Berita Acara — periode bisa dipilih */}
+      {/* Row 3: Status Agent */}
+      <div>
+        <div className="flex items-center gap-1.5 mb-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
+            Status Agent {stats.latestVersion !== '—' && <span className="text-gray-400 normal-case">— versi terbaru: <strong>v{stats.latestVersion}</strong></span>}
+          </p>
+          <InfoTooltip
+            text={
+              'Terinstall = laptop yang agent-nya pernah ping ke server (kolom agent_version terisi).\n\n' +
+              'Belum Install = laptop yang ke-register tapi agent-nya belum pernah jalan.\n\n' +
+              'Versi Terbaru = jumlah agent yang versi-nya sama dengan agent_config.version di DB.\n\n' +
+              'Perlu Update = agent versi lama, akan auto-update dalam max 1 jam saat laptop online.'
+            }
+          />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Agent Terinstall" value={stats.agentInstalled}
+            subtitle={pct(stats.agentInstalled)}
+            icon={Cpu} iconBg="#DBEAFE" iconColor="#1D4ED8" loading={loading} />
+          <StatCard label="Belum Install" value={stats.agentBelum}
+            subtitle={pct(stats.agentBelum)}
+            icon={AlertTriangle} iconBg="#FEE2E2" iconColor="#DC2626" loading={loading} />
+          <StatCard label="Versi Terbaru" value={stats.agentLatest}
+            subtitle={stats.agentInstalled > 0 ? `${stats.agentLatest}/${stats.agentInstalled} agent up-to-date` : '—'}
+            icon={CheckCircle} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
+          <StatCard label="Perlu Update" value={stats.agentOutdated}
+            subtitle={stats.agentOutdated > 0 ? 'Auto-update dalam 1 jam' : 'Semua up-to-date'}
+            icon={Download} iconBg="#FEF3C7" iconColor="#D97706" loading={loading} />
+        </div>
+      </div>
+
+      {/* Row 4: Berita Acara — periode bisa dipilih */}
       <div>
         <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
