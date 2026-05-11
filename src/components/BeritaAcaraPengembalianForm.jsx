@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FileText, Monitor, User, RotateCcw, Link as LinkIcon, Copy, Check } from 'lucide-react'
+import { FileText, Monitor, User, RotateCcw, Link as LinkIcon, Copy, Check, Send, PenLine, UserX } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getAllUsers } from '../services/userService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
@@ -64,6 +64,9 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
   const [defaultItSig, setDefaultItSig] = useState('')
   const [createdBap, setCreatedBap]   = useState(null) // BAP yang baru dibuat → buat tampilin link TTD user
   const [copied, setCopied]           = useState(false)
+  // Mode TTD: 'link' = kirim link ke user, 'onsite' = user TTD di tempat (di laptop teknisi),
+  //          'resign' = IT TTD karena user resign / gak bisa dihubungi (wajib catatan)
+  const [signMode, setSignMode]       = useState('link')
   const [readBA, setReadBA]         = useState(false)
   const [agreeTnc, setAgreeTnc]     = useState(false)
   const agreedAll = readBA && agreeTnc
@@ -230,22 +233,48 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
       setError('Masukkan serial number perangkat terlebih dahulu.')
       return
     }
+
+    // Validasi per mode
+    let finalForm = { ...form }
+    if (signMode === 'onsite') {
+      if (!readBA || !agreeTnc) { setError('User wajib centang kedua persetujuan terlebih dahulu.'); return }
+      if (!form.signature_pengembalian) { setError('User wajib tanda tangan terlebih dahulu.'); return }
+    } else if (signMode === 'resign') {
+      const note = (form.keterangan || '').trim()
+      if (!note || !/resign|mutasi|tidak.{0,3}aktif|non.{0,3}aktif|phk/i.test(note)) {
+        setError('Wajib isi catatan alasan kenapa user tidak menandatangani (mis. "User telah resign per [tgl], handover oleh atasan [nama]").')
+        return
+      }
+      if (!defaultItSig) {
+        setError('Tanda tangan default PIC IT belum diatur di Settings. Tidak bisa lanjut mode resign.')
+        return
+      }
+      // Pakai TTD IT sebagai tanda tangan pengembalian, ditambah marker di keterangan
+      finalForm.signature_pengembalian = defaultItSig
+      finalForm.keterangan = `[TTD oleh IT — user tidak dapat menandatangani] ${note}`
+    } else {
+      // link mode → biarkan signature kosong
+      finalForm.signature_pengembalian = null
+    }
+
     try {
       setLoading(true)
       const created = await createBAP({
-        ...form,
+        ...finalForm,
         nomor_ba:   nomorSuffix.trim() ? `BA.ITO.${nomorSuffix.trim()}` : 'BA.ITO.',
         created_by: user?.email ?? 'unknown',
-        signed_at:  form.signature_pengembalian ? new Date().toISOString() : null,
+        signed_at:  finalForm.signature_pengembalian ? new Date().toISOString() : null,
       })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-      // Kalau user belum TTD di form admin, tampilkan link buat di-share ke user
-      if (!form.signature_pengembalian && created?.id) {
+      // Hanya mode 'link' yang menampilkan panel Kirim Link
+      if (signMode === 'link' && created?.id) {
         setCreatedBap(created)
       } else {
         setForm(emptyForm)
         setNomorSuffix('')
+        setReadBA(false)
+        setAgreeTnc(false)
       }
       onCreated?.()
     } catch (err) {
@@ -454,19 +483,75 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
                 placeholder="0812-3456-7890 (untuk kirim BAP via WA)" className={inputClass} {...focus} />
             </Field>
 
-            {/* Info: user TTD lewat link publik */}
-            <div className="rounded-lg p-3 mt-2 text-xs flex items-start gap-2"
-              style={{ backgroundColor: '#EFF6FF', color: '#1E3A8A', border: '1px solid #BFDBFE' }}>
-              <LinkIcon size={14} className="flex-shrink-0 mt-0.5" />
-              <div>
-                <strong>User tanda tangan sendiri.</strong> Setelah BAP disimpan, Anda akan mendapatkan
-                link untuk dikirim ke user (via WA / email). User klik link → centang persetujuan → TTD digital.
-                IT cukup pilih kelengkapan & kondisi di bawah.
+            {/* === Mode Tanda Tangan === */}
+            <div className="mt-2">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500 m-0 mb-2">
+                Mode Tanda Tangan User
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { val: 'link',   icon: Send,    label: 'Kirim Link ke User',   desc: 'User TTD via WA/email' },
+                  { val: 'onsite', icon: PenLine, label: 'TTD di Tempat',        desc: 'User TTD langsung di laptop ini' },
+                  { val: 'resign', icon: UserX,   label: 'User Resign / Mutasi', desc: 'TTD oleh IT + catatan wajib' },
+                ].map(({ val, icon: Icon, label, desc }) => {
+                  const active = signMode === val
+                  return (
+                    <button key={val} type="button"
+                      onClick={() => {
+                        setSignMode(val)
+                        if (val !== 'onsite') {
+                          setReadBA(false); setAgreeTnc(false)
+                          setForm(f => ({ ...f, signature_pengembalian: null }))
+                        }
+                      }}
+                      className="text-left p-3 rounded-lg border-2 cursor-pointer transition-all"
+                      style={{
+                        backgroundColor: active ? '#EFF6FF' : 'white',
+                        borderColor:     active ? '#3B82F6' : '#E5E7EB',
+                      }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon size={14} style={{ color: active ? '#1D4ED8' : '#6B7280' }} />
+                        <span className="text-xs font-bold" style={{ color: active ? '#1E3A8A' : '#374151' }}>{label}</span>
+                      </div>
+                      <p className="text-[11px] m-0 leading-tight" style={{ color: active ? '#1E40AF' : '#9CA3AF' }}>{desc}</p>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* === LEGACY: T&C + checkbox + signature (HIDDEN — diisi user via /bap-sign/:id) === */}
-            <div className="hidden">
+            {signMode === 'link' && (
+              <div className="rounded-lg p-3 mt-2 text-xs flex items-start gap-2"
+                style={{ backgroundColor: '#EFF6FF', color: '#1E3A8A', border: '1px solid #BFDBFE' }}>
+                <LinkIcon size={14} className="flex-shrink-0 mt-0.5" />
+                <div>
+                  <strong>User TTD via link.</strong> Setelah BAP disimpan, akan muncul link yang bisa
+                  dikirim via WA/email. User klik link → centang persetujuan → TTD digital.
+                </div>
+              </div>
+            )}
+
+            {signMode === 'resign' && (
+              <div className="rounded-lg p-3 mt-2 space-y-2"
+                style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5' }}>
+                <div className="flex items-start gap-2 text-xs" style={{ color: '#7F1D1D' }}>
+                  <UserX size={14} className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Mode user resign/mutasi.</strong> Tanda tangan otomatis pakai TTD default PIC IT.
+                    Wajib isi <strong>catatan alasan</strong> di kolom "Catatan" di bawah (sebutkan tanggal resign &
+                    nama atasan/HR yang konfirmasi handover).
+                  </div>
+                </div>
+                {!defaultItSig && (
+                  <p className="text-xs m-0" style={{ color: '#991B1B' }}>
+                    ⚠ TTD default PIC IT belum di-set. Buka <strong>Settings</strong> untuk upload, atau pilih mode lain.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* === T&C + checkbox + signature — TAMPIL kalau mode onsite === */}
+            <div className={signMode === 'onsite' ? '' : 'hidden'}>
               <p className="text-xs font-bold uppercase tracking-wide m-0 mb-2" style={{ color: '#92400E' }}>
                 Syarat & Ketentuan Pengembalian
               </p>
@@ -527,7 +612,21 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
                 Dokumen ini tercatat secara digital dan memiliki kekuatan hukum yang setara dengan tanda tangan manual.
               </p>
             </div>
-            {/* === END LEGACY === */}
+
+            {/* Signature pad — tampil saat onsite & kedua checkbox dicentang */}
+            {signMode === 'onsite' && (
+              agreedAll ? (
+                <SignaturePad
+                  label="Tanda Tangan User"
+                  value={form.signature_pengembalian}
+                  onChange={sig => setForm(f => ({ ...f, signature_pengembalian: sig }))}
+                />
+              ) : (
+                <div className="rounded-lg p-3 text-center text-xs" style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}>
+                  ✏️ Centang KEDUA persetujuan di atas untuk menampilkan kotak tanda tangan
+                </div>
+              )
+            )}
           </div>
         </div>
 
