@@ -18,7 +18,12 @@ export function shareBAPWhatsApp(bap, baseUrl) {
     return
   }
 
-  const link = `${baseUrl || window.location.origin}/bap/${bap.id}`
+  const origin = baseUrl || window.location.origin
+  const isSigned = !!bap.signature_pengembalian
+  const link = isSigned
+    ? `${origin}/bap/${bap.id}`        // sudah TTD → kirim link view/arsip
+    : `${origin}/bap-sign/${bap.id}`   // belum TTD → kirim link buat user TTD
+
   const tanggal = bap.tanggal
     ? new Date(bap.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })
     : '—'
@@ -27,10 +32,11 @@ export function shareBAPWhatsApp(bap, baseUrl) {
   const host  = bap.hostname || ''
   const laptop = host && sn ? `${host} (SN: ${sn})` : (host || sn || '—')
 
-  const pesan =
+  const pesan = isSigned
+    ?
 `Halo Pak/Bu ${nama},
 
-Berikut Berita Acara Pengembalian laptop Bapak/Ibu:
+Berikut Berita Acara Pengembalian laptop Bapak/Ibu yang telah ditandatangani:
 - Nomor BA: ${bap.nomor_ba || '—'}
 - Tanggal: ${tanggal}
 - Laptop: ${laptop}
@@ -40,6 +46,24 @@ Klik link berikut untuk melihat & menyimpan dokumen:
 ${link}
 
 Mohon disimpan untuk arsip Bapak/Ibu. Terima kasih.
+
+IT Support Seat Management
+Angkasa Pura Supports`
+    :
+`Halo Pak/Bu ${nama},
+
+Mohon tanda tangani Berita Acara Pengembalian laptop berikut:
+- Nomor BA: ${bap.nomor_ba || '—'}
+- Tanggal: ${tanggal}
+- Laptop: ${laptop}
+
+Klik link berikut untuk menandatangani:
+
+${link}
+
+Cara: centang 2 kotak persetujuan → goreskan tanda tangan → submit. Cukup dari HP, tanpa perlu install apapun.
+
+Terima kasih.
 
 IT Support Seat Management
 Angkasa Pura Supports`
