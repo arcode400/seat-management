@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FileText, Monitor, User, RotateCcw } from 'lucide-react'
+import { FileText, Monitor, User, RotateCcw, Link as LinkIcon, Copy, Check } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getAllUsers } from '../services/userService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
@@ -62,6 +62,8 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
   const [error, setError]           = useState(null)
   const [success, setSuccess]       = useState(false)
   const [defaultItSig, setDefaultItSig] = useState('')
+  const [createdBap, setCreatedBap]   = useState(null) // BAP yang baru dibuat → buat tampilin link TTD user
+  const [copied, setCopied]           = useState(false)
   const [readBA, setReadBA]         = useState(false)
   const [agreeTnc, setAgreeTnc]     = useState(false)
   const agreedAll = readBA && agreeTnc
@@ -230,7 +232,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
     }
     try {
       setLoading(true)
-      await createBAP({
+      const created = await createBAP({
         ...form,
         nomor_ba:   nomorSuffix.trim() ? `BA.ITO.${nomorSuffix.trim()}` : 'BA.ITO.',
         created_by: user?.email ?? 'unknown',
@@ -238,14 +240,47 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
       })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-      setForm(emptyForm)
-      setNomorSuffix('')
+      // Kalau user belum TTD di form admin, tampilkan link buat di-share ke user
+      if (!form.signature_pengembalian && created?.id) {
+        setCreatedBap(created)
+      } else {
+        setForm(emptyForm)
+        setNomorSuffix('')
+      }
       onCreated?.()
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  function signLink() {
+    return createdBap ? `${window.location.origin}/bap-sign/${createdBap.id}` : ''
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(signLink())
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      alert('Gagal copy. Salin manual link di bawah.')
+    }
+  }
+
+  function shareWA() {
+    const link = signLink()
+    const msg = `Halo, mohon tanda tangani Berita Acara Pengembalian laptop berikut:\n\n${link}\n\nTerima kasih.\n— IT Support Seat Management`
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  function resetAfterShare() {
+    setCreatedBap(null)
+    setForm(emptyForm)
+    setNomorSuffix('')
+    setReadBA(false)
+    setAgreeTnc(false)
   }
 
   const inputClass = 'w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg text-gray-800 placeholder-gray-300 bg-gray-50 focus:bg-white focus:outline-none transition-colors uppercase'
@@ -419,8 +454,19 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
                 placeholder="0812-3456-7890 (untuk kirim BAP via WA)" className={inputClass} {...focus} />
             </Field>
 
-            {/* Syarat & Ketentuan */}
-            <div className="rounded-lg p-4 mt-2" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FCD34D' }}>
+            {/* Info: user TTD lewat link publik */}
+            <div className="rounded-lg p-3 mt-2 text-xs flex items-start gap-2"
+              style={{ backgroundColor: '#EFF6FF', color: '#1E3A8A', border: '1px solid #BFDBFE' }}>
+              <LinkIcon size={14} className="flex-shrink-0 mt-0.5" />
+              <div>
+                <strong>User tanda tangan sendiri.</strong> Setelah BAP disimpan, Anda akan mendapatkan
+                link untuk dikirim ke user (via WA / email). User klik link → centang persetujuan → TTD digital.
+                IT cukup pilih kelengkapan & kondisi di bawah.
+              </div>
+            </div>
+
+            {/* === LEGACY: T&C + checkbox + signature (HIDDEN — diisi user via /bap-sign/:id) === */}
+            <div className="hidden">
               <p className="text-xs font-bold uppercase tracking-wide m-0 mb-2" style={{ color: '#92400E' }}>
                 Syarat & Ketentuan Pengembalian
               </p>
@@ -481,19 +527,7 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
                 Dokumen ini tercatat secara digital dan memiliki kekuatan hukum yang setara dengan tanda tangan manual.
               </p>
             </div>
-
-            {/* Signature pad muncul HANYA setelah kedua checkbox dicentang */}
-            {agreedAll ? (
-              <SignaturePad
-                label="Tanda Tangan User"
-                value={form.signature_pengembalian}
-                onChange={sig => setForm(f => ({ ...f, signature_pengembalian: sig }))}
-              />
-            ) : (
-              <div className="rounded-lg p-3 text-center text-xs" style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}>
-                ✏️ Centang KEDUA persetujuan di atas untuk menampilkan kotak tanda tangan
-              </div>
-            )}
+            {/* === END LEGACY === */}
           </div>
         </div>
 
@@ -596,10 +630,48 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
           <span>⚠</span> {error}
         </div>
       )}
-      {success && (
+      {success && !createdBap && (
         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm"
           style={{ backgroundColor: '#DCFCE7', color: '#16A34A' }}>
           <span>✓</span> Berita Acara Pengembalian berhasil dibuat.
+        </div>
+      )}
+
+      {/* Panel link TTD — muncul setelah BAP dibuat (user belum TTD) */}
+      {createdBap && (
+        <div className="rounded-xl p-5 border-2 space-y-3"
+          style={{ backgroundColor: '#EFF6FF', borderColor: '#3B82F6' }}>
+          <div className="flex items-center gap-2">
+            <LinkIcon size={18} className="text-blue-700" />
+            <p className="text-sm font-bold m-0 text-blue-900">
+              Kirim Link Tanda Tangan ke User
+            </p>
+          </div>
+          <p className="text-xs m-0 text-blue-900">
+            BAP <strong>{createdBap.nomor_ba}</strong> sudah disimpan. Bagikan link berikut ke user
+            (via WhatsApp / email) untuk ditandatangani:
+          </p>
+          <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-blue-200">
+            <input readOnly value={signLink()}
+              className="flex-1 text-xs font-mono bg-transparent border-0 px-2 py-1 focus:outline-none text-gray-700" />
+            <button type="button" onClick={copyLink}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border-0 cursor-pointer transition-colors"
+              style={{ backgroundColor: copied ? '#16A34A' : '#0D47A1', color: 'white' }}>
+              {copied ? <><Check size={12} /> Tersalin</> : <><Copy size={12} /> Copy</>}
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={shareWA}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border-0 cursor-pointer text-white transition-colors"
+              style={{ backgroundColor: '#25D366' }}>
+              Share via WhatsApp
+            </button>
+            <button type="button" onClick={resetAfterShare}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border cursor-pointer transition-colors"
+              style={{ backgroundColor: 'white', borderColor: '#D1D5DB', color: '#374151' }}>
+              Buat BAP Baru
+            </button>
+          </div>
         </div>
       )}
 
