@@ -200,16 +200,28 @@ export default function DashboardCards() {
               }
             />
           </div>
-          <a
-            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent.zip`}
-            download
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
-            style={{ backgroundColor: '#0D47A1', color: 'white' }}
-            title="Download installer agent (zip) — extract di laptop user lalu jalankan setup.bat"
-          >
-            <Download size={14} />
-            Download Installer Agent
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-windows.zip`}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
+              style={{ backgroundColor: '#0D47A1', color: 'white' }}
+              title="Download installer agent untuk Windows — extract & jalankan setup.bat"
+            >
+              <Download size={14} />
+              Windows
+            </a>
+            <a
+              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-mac.zip`}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
+              style={{ backgroundColor: '#374151', color: 'white' }}
+              title="Download installer agent untuk macOS — extract & jalankan setup.sh"
+            >
+              <Download size={14} />
+              macOS
+            </a>
+          </div>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Agent Terinstall" value={stats.agentInstalled}
