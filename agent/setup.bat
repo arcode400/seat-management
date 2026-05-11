@@ -22,6 +22,11 @@ cd /d "%~dp0"
 :: Tambah path Node.js ke sesi ini (antisipasi PATH belum ke-refresh)
 set "PATH=C:\Program Files\nodejs\;%PATH%"
 
+:: Skip platform check — biar Node yang lebih baru tetap bisa jalan di Windows 8.1 / Server 2012
+:: (kalau zip dibuat dengan Node 22+, tapi target laptop masih Win 8.x)
+set "NODE_SKIP_PLATFORM_CHECK=1"
+setx NODE_SKIP_PLATFORM_CHECK 1 /M >nul 2>&1
+
 :: Cek file yang diperlukan
 if not exist "monitor.js" (
     echo [ERROR] File monitor.js tidak ditemukan!

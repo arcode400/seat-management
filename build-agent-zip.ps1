@@ -10,13 +10,16 @@ $root = $PSScriptRoot
 # Cache di root repo biar gak download ulang tiap build
 $nodeMsiPath = Join-Path $root 'node-installer.msi'
 if (-not (Test-Path $nodeMsiPath)) {
-  Write-Host "[..] Download Node.js LTS MSI (sekali aja, di-cache di repo root)..." -ForegroundColor Cyan
+  Write-Host "[..] Download Node.js 18 LTS MSI (sekali aja, di-cache di repo root)..." -ForegroundColor Cyan
+  Write-Host "    Pakai Node 18 (bukan 22) supaya kompatibel dengan laptop Windows 8.1 / Server 2012 yang masih dipakai." -ForegroundColor DarkGray
   try {
     $ProgressPreference = 'SilentlyContinue'
     $idx = Invoke-RestMethod 'https://nodejs.org/dist/index.json' -TimeoutSec 30
-    $lts = $idx | Where-Object { $_.lts } | Select-Object -First 1
-    $url = "https://nodejs.org/dist/$($lts.version)/node-$($lts.version)-x64.msi"
-    Write-Host "    Versi: $($lts.version)"
+    # Pilih Node 18 LTS terbaru — versi terakhir yang support Win 8.1
+    $node18 = $idx | Where-Object { $_.version -match '^v18\.' -and $_.lts } | Select-Object -First 1
+    if (-not $node18) { throw "Node 18 LTS tidak ditemukan di index.json" }
+    $url = "https://nodejs.org/dist/$($node18.version)/node-$($node18.version)-x64.msi"
+    Write-Host "    Versi: $($node18.version)"
     Invoke-WebRequest -Uri $url -OutFile $nodeMsiPath -UseBasicParsing -TimeoutSec 300
     $sz = [math]::Round((Get-Item $nodeMsiPath).Length / 1MB, 1)
     Write-Host "[OK] node-installer.msi tersimpan ($sz MB)" -ForegroundColor Green
