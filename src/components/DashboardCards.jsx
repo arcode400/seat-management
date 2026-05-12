@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileText, RotateCcw, AlertCircle, Edit3, Cpu, Download, AlertTriangle } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileText, RotateCcw, AlertCircle, Edit3, Cpu, Download, AlertTriangle, TrendingUp, TrendingDown, ArrowDownRight, ArrowUpRight, ArrowRight } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
 import { getAllBAP } from '../services/beritaAcaraPengembalianService'
@@ -14,21 +15,103 @@ function toUTC(ts) {
   return new Date(hasTimezone ? ts : ts + 'Z')
 }
 
-function StatCard({ label, value, subtitle, icon: Icon, iconBg, iconColor, loading }) {
+// === Modern palette — tonal Tailwind, gak terlalu mencolok ===
+const TONE = {
+  blue:    { bg: 'bg-blue-50',    fg: 'text-blue-600',    ring: 'ring-blue-100',    accent: 'text-blue-700' },
+  emerald: { bg: 'bg-emerald-50', fg: 'text-emerald-600', ring: 'ring-emerald-100', accent: 'text-emerald-700' },
+  amber:   { bg: 'bg-amber-50',   fg: 'text-amber-600',   ring: 'ring-amber-100',   accent: 'text-amber-700' },
+  rose:    { bg: 'bg-rose-50',    fg: 'text-rose-600',    ring: 'ring-rose-100',    accent: 'text-rose-700' },
+  slate:   { bg: 'bg-slate-100',  fg: 'text-slate-500',   ring: 'ring-slate-200',   accent: 'text-slate-700' },
+  sky:     { bg: 'bg-sky-50',     fg: 'text-sky-600',     ring: 'ring-sky-100',     accent: 'text-sky-700' },
+}
+
+// Skeleton untuk loading state
+function StatSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-start gap-4">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: iconBg }}>
-        <Icon size={22} style={{ color: iconColor }} strokeWidth={1.75} />
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="flex items-start justify-between mb-3">
+        <div className="w-9 h-9 bg-slate-100 rounded-lg animate-pulse" />
       </div>
-      <div className="min-w-0">
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide m-0">{label}</p>
-        {loading
-          ? <div className="w-10 h-7 bg-gray-100 rounded animate-pulse my-1" />
-          : <p className="text-3xl font-bold text-gray-900 leading-tight my-1 m-0">{value}</p>
-        }
-        <p className="text-xs text-gray-400 leading-tight m-0">{subtitle}</p>
+      <div className="w-16 h-3 bg-slate-100 rounded animate-pulse mb-2" />
+      <div className="w-12 h-7 bg-slate-100 rounded animate-pulse mb-2" />
+      <div className="w-24 h-3 bg-slate-100 rounded animate-pulse" />
+    </div>
+  )
+}
+
+function StatCard({ label, value, subtitle, icon: Icon, tone = 'blue', trend, loading }) {
+  if (loading) return <StatSkeleton />
+  const t = TONE[tone] || TONE.blue
+
+  // trend: { dir: 'up'|'down'|'flat', value: '+12%' | '-5%' | '0%' }
+  const TrendIcon = trend?.dir === 'up' ? ArrowUpRight
+                  : trend?.dir === 'down' ? ArrowDownRight
+                  : ArrowRight
+  const trendColor = trend?.dir === 'up' ? 'text-emerald-600 bg-emerald-50'
+                   : trend?.dir === 'down' ? 'text-rose-600 bg-rose-50'
+                   : 'text-slate-500 bg-slate-100'
+
+  return (
+    <motion.div
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.15 }}
+      className="group bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-300 hover:shadow-sm transition-all"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ring-1 ring-inset ${t.bg} ${t.ring}`}>
+          <Icon size={18} strokeWidth={2} className={t.fg} />
+        </div>
+        {trend && (
+          <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${trendColor}`}>
+            <TrendIcon size={11} strokeWidth={2.5} />
+            {trend.value}
+          </span>
+        )}
       </div>
+      <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider m-0 mb-1">{label}</p>
+      <p className="text-2xl font-bold text-slate-900 leading-none tracking-tight m-0">{value}</p>
+      {subtitle && (
+        <p className="text-xs text-slate-400 mt-1.5 m-0 truncate">{subtitle}</p>
+      )}
+    </motion.div>
+  )
+}
+
+// Wrapper container untuk staggered animation
+function StatsGrid({ children, cols = 4 }) {
+  const colsClass = cols === 3 ? 'lg:grid-cols-3'
+                  : cols === 2 ? 'lg:grid-cols-2'
+                  : 'lg:grid-cols-4'
+  return (
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { staggerChildren: 0.04 } },
+      }}
+      className={`grid grid-cols-2 ${colsClass} gap-3`}
+    >
+      {Array.isArray(children) ? children.map((c, i) => (
+        <motion.div key={i} variants={{
+          hidden: { opacity: 0, y: 8 },
+          show:   { opacity: 1, y: 0 },
+        }}>
+          {c}
+        </motion.div>
+      )) : children}
+    </motion.div>
+  )
+}
+
+function SectionHeader({ title, info, right }) {
+  return (
+    <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+      <div className="flex items-center gap-1.5">
+        <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider m-0">{title}</h2>
+        {info && <InfoTooltip text={info} />}
+      </div>
+      {right}
     </div>
   )
 }
@@ -133,158 +216,133 @@ export default function DashboardCards() {
     currentYear, currentYear - 1, currentYear - 2, currentYear - 3, currentYear - 4,
   ])].filter(y => !isNaN(y)).sort((a, b) => b - a)
 
+  // Filter chip style buat segmented control
+  const segBase = 'px-3 py-1.5 text-xs font-semibold cursor-pointer transition-colors border-0'
+
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-6 mb-6">
 
       {/* Row 1: Monitoring jaringan */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
-            Monitoring Jaringan
-          </p>
-          <InfoTooltip
-            text={
-              'Online = laptop yang ping ke server < 3 menit terakhir, termasuk yang sedang dipinjam (in_use).\n\n' +
-              'Offline = sisanya.\n\n' +
-              'Beda dengan donut "Status Laptop" di bawah, yang misahin In Use sebagai kategori sendiri.'
-            }
-          />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <section>
+        <SectionHeader
+          title="Monitoring Jaringan"
+          info={'Online = laptop yang ping ke server < 3 menit terakhir, termasuk yang sedang dipinjam (in_use).\n\nOffline = sisanya.'}
+        />
+        <StatsGrid cols={3}>
           <StatCard label="Total Perangkat" value={stats.total}
             subtitle="Semua perangkat terdaftar"
-            icon={Monitor} iconBg="#DBEAFE" iconColor="#1D4ED8" loading={loading} />
+            icon={Monitor} tone="blue" loading={loading} />
           <StatCard label="Online" value={stats.online}
             subtitle={pct(stats.online)}
-            icon={Wifi} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
+            icon={Wifi} tone="emerald" loading={loading} />
           <StatCard label="Offline" value={stats.offline}
             subtitle={pct(stats.offline)}
-            icon={WifiOff} iconBg="#FEE2E2" iconColor="#DC2626" loading={loading} />
-        </div>
-      </div>
+            icon={WifiOff} tone="rose" loading={loading} />
+        </StatsGrid>
+      </section>
 
       {/* Row 2: Status operasional */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          Status Operasional
-        </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Tersedia" value={stats.normal}
-            subtitle={pct(stats.normal)}
-            icon={CheckCircle} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
-          <StatCard label="Perbaikan" value={stats.perbaikan}
-            subtitle={pct(stats.perbaikan)}
-            icon={Wrench} iconBg="#FEE2E2" iconColor="#DC2626" loading={loading} />
-          <StatCard label="Dipinjam" value={stats.dipinjam}
-            subtitle={pct(stats.dipinjam)}
-            icon={BookOpen} iconBg="#FEF3C7" iconColor="#D97706" loading={loading} />
-          <StatCard label="Tidak Aktif" value={stats.tidakAktif}
-            subtitle={pct(stats.tidakAktif)}
-            icon={PowerOff} iconBg="#F3F4F6" iconColor="#6B7280" loading={loading} />
-        </div>
-      </div>
+      <section>
+        <SectionHeader title="Status Operasional" />
+        <StatsGrid cols={4}>
+          <StatCard label="Tersedia" value={stats.normal} subtitle={pct(stats.normal)}
+            icon={CheckCircle} tone="emerald" loading={loading} />
+          <StatCard label="Perbaikan" value={stats.perbaikan} subtitle={pct(stats.perbaikan)}
+            icon={Wrench} tone="rose" loading={loading} />
+          <StatCard label="Dipinjam" value={stats.dipinjam} subtitle={pct(stats.dipinjam)}
+            icon={BookOpen} tone="amber" loading={loading} />
+          <StatCard label="Tidak Aktif" value={stats.tidakAktif} subtitle={pct(stats.tidakAktif)}
+            icon={PowerOff} tone="slate" loading={loading} />
+        </StatsGrid>
+      </section>
 
       {/* Row 3: Status Agent */}
-      <div>
-        <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
-              Status Agent {stats.latestVersion !== '—' && <span className="text-gray-400 normal-case">— versi terbaru: <strong>v{stats.latestVersion}</strong></span>}
-            </p>
-            <InfoTooltip
-              text={
-                'Terinstall = laptop yang agent-nya pernah ping ke server (kolom agent_version terisi).\n\n' +
-                'Belum Install = laptop yang ke-register tapi agent-nya belum pernah jalan.\n\n' +
-                'Versi Terbaru = jumlah agent yang versi-nya sama dengan agent_config.version di DB.\n\n' +
-                'Perlu Update = agent versi lama, akan auto-update dalam max 1 jam saat laptop online.'
-              }
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-windows.zip`}
-              download
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
-              style={{ backgroundColor: '#0D47A1', color: 'white' }}
-              title="Download installer agent untuk Windows — extract & jalankan setup.bat"
-            >
-              <Download size={14} />
-              Windows
-            </a>
-            <a
-              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-mac.zip`}
-              download
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
-              style={{ backgroundColor: '#374151', color: 'white' }}
-              title="Download installer agent untuk macOS — extract, lalu jalankan: bash setup.sh"
-            >
-              <Download size={14} />
-              macOS
-            </a>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Agent Terinstall" value={stats.agentInstalled}
-            subtitle={pct(stats.agentInstalled)}
-            icon={Cpu} iconBg="#DBEAFE" iconColor="#1D4ED8" loading={loading} />
-          <StatCard label="Belum Install" value={stats.agentBelum}
-            subtitle={pct(stats.agentBelum)}
-            icon={AlertTriangle} iconBg="#FEE2E2" iconColor="#DC2626" loading={loading} />
+      <section>
+        <SectionHeader
+          title={`Status Agent ${stats.latestVersion !== '—' ? `· v${stats.latestVersion}` : ''}`}
+          info={
+            'Terinstall = laptop yang agent-nya pernah ping ke server.\n' +
+            'Belum Install = laptop ke-register tapi agent belum jalan.\n' +
+            'Versi Terbaru = agent yang versinya sama dengan agent_config.version.\n' +
+            'Perlu Update = auto-update dalam max 1 jam.'
+          }
+          right={
+            <div className="flex items-center gap-2">
+              <a
+                href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-windows.zip`}
+                download
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors no-underline"
+                title="Download installer agent untuk Windows"
+              >
+                <Download size={12} strokeWidth={2.5} />
+                Windows
+              </a>
+              <a
+                href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-mac.zip`}
+                download
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-slate-700 hover:bg-slate-800 text-white transition-colors no-underline"
+                title="Download installer agent untuk macOS"
+              >
+                <Download size={12} strokeWidth={2.5} />
+                macOS
+              </a>
+            </div>
+          }
+        />
+        <StatsGrid cols={4}>
+          <StatCard label="Agent Terinstall" value={stats.agentInstalled} subtitle={pct(stats.agentInstalled)}
+            icon={Cpu} tone="blue" loading={loading} />
+          <StatCard label="Belum Install" value={stats.agentBelum} subtitle={pct(stats.agentBelum)}
+            icon={AlertTriangle} tone="rose" loading={loading} />
           <StatCard label="Versi Terbaru" value={stats.agentLatest}
-            subtitle={stats.agentInstalled > 0 ? `${stats.agentLatest}/${stats.agentInstalled} agent up-to-date` : '—'}
-            icon={CheckCircle} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
+            subtitle={stats.agentInstalled > 0 ? `${stats.agentLatest}/${stats.agentInstalled} up-to-date` : '—'}
+            icon={CheckCircle} tone="emerald" loading={loading} />
           <StatCard label="Perlu Update" value={stats.agentOutdated}
-            subtitle={stats.agentOutdated > 0 ? 'Auto-update dalam 1 jam' : 'Semua up-to-date'}
-            icon={Download} iconBg="#FEF3C7" iconColor="#D97706" loading={loading} />
-        </div>
-      </div>
+            subtitle={stats.agentOutdated > 0 ? 'Auto-update <1 jam' : 'Semua up-to-date'}
+            icon={Download} tone="amber" loading={loading} />
+        </StatsGrid>
+      </section>
 
       {/* Row 4: Berita Acara — periode bisa dipilih */}
-      <div>
-        <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide m-0">
-            Berita Acara — {periodLabel}
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs">
-              {['bulan', 'tahun'].map(m => (
-                <button key={m} onClick={() => setPeriodMode(m)}
-                  className="px-3 py-1.5 border-0 cursor-pointer transition-colors capitalize"
-                  style={{
-                    backgroundColor: periodMode === m ? '#0D47A1' : 'white',
-                    color:           periodMode === m ? 'white'   : '#6B7280',
-                  }}>
-                  {m === 'bulan' ? 'Per Bulan' : 'Per Tahun'}
-                </button>
-              ))}
-            </div>
-            {periodMode === 'bulan' && (
-              <select value={periodMonth} onChange={e => setPeriodMonth(parseInt(e.target.value))}
-                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white cursor-pointer focus:outline-none">
-                {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+      <section>
+        <SectionHeader
+          title={`Berita Acara · ${periodLabel}`}
+          right={
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden bg-white">
+                {['bulan', 'tahun'].map(m => (
+                  <button key={m} onClick={() => setPeriodMode(m)}
+                    className={`${segBase} ${periodMode === m ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+                    {m === 'bulan' ? 'Per Bulan' : 'Per Tahun'}
+                  </button>
+                ))}
+              </div>
+              {periodMode === 'bulan' && (
+                <select value={periodMonth} onChange={e => setPeriodMonth(parseInt(e.target.value))}
+                  className="px-2.5 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white cursor-pointer focus:outline-none focus:border-blue-400 text-slate-700">
+                  {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+                </select>
+              )}
+              <select value={periodYear} onChange={e => setPeriodYear(parseInt(e.target.value))}
+                className="px-2.5 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white cursor-pointer focus:outline-none focus:border-blue-400 text-slate-700">
+                {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
-            )}
-            <select value={periodYear} onChange={e => setPeriodYear(parseInt(e.target.value))}
-              className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white cursor-pointer focus:outline-none">
-              {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="BAST Dibuat" value={baStats.bastBulan}
-            subtitle={`Serah Terima ${periodLabel.toLowerCase()}`}
-            icon={FileText} iconBg="#DBEAFE" iconColor="#1D4ED8" loading={loading} />
+            </div>
+          }
+        />
+        <StatsGrid cols={4}>
+          <StatCard label="BAST Dibuat" value={baStats.bastBulan} subtitle={`Serah Terima ${periodLabel.toLowerCase()}`}
+            icon={FileText} tone="blue" loading={loading} />
           <StatCard label="BAST Pending TTD" value={baStats.bastPending}
             subtitle={baStats.bastBulan > 0 ? `${baStats.bastBulan - baStats.bastPending} sudah signed` : '—'}
-            icon={Edit3} iconBg="#FEF3C7" iconColor="#D97706" loading={loading} />
-          <StatCard label="BAP Dibuat" value={baStats.bapBulan}
-            subtitle={`Pengembalian ${periodLabel.toLowerCase()}`}
-            icon={RotateCcw} iconBg="#FFF7ED" iconColor="#D97706" loading={loading} />
+            icon={Edit3} tone="amber" loading={loading} />
+          <StatCard label="BAP Dibuat" value={baStats.bapBulan} subtitle={`Pengembalian ${periodLabel.toLowerCase()}`}
+            icon={RotateCcw} tone="sky" loading={loading} />
           <StatCard label="BAP Signed" value={baStats.bapSigned}
             subtitle={baStats.bapBulan > 0 ? `${baStats.bapBulan - baStats.bapSigned} belum signed` : '—'}
-            icon={CheckCircle} iconBg="#DCFCE7" iconColor="#16A34A" loading={loading} />
-        </div>
-      </div>
+            icon={CheckCircle} tone="emerald" loading={loading} />
+        </StatsGrid>
+      </section>
     </div>
   )
 }
