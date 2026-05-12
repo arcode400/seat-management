@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, Bell, LogOut, Search, ChevronRight, User as UserIcon, Settings as SettingsIcon } from 'lucide-react'
+import { Menu, Bell, LogOut, Search, ChevronRight, User as UserIcon, Settings as SettingsIcon, WifiOff, CheckCircle2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getAllLaptops } from '../services/laptopService'
 
 const ROLE_BADGES = {
   super_admin: { label: 'Super Admin', cls: 'bg-amber-50 text-amber-700 ring-amber-200' },
@@ -10,18 +11,60 @@ const ROLE_BADGES = {
   staff:       { label: 'Teknisi',     cls: 'bg-slate-100 text-slate-600 ring-slate-200' },
 }
 
+function toUTC(ts) {
+  if (!ts) return null
+  const hasTimezone = ts.endsWith('Z') || ts.includes('+') || /\d{2}:\d{2}$/.test(ts)
+  return new Date(hasTimezone ? ts : ts + 'Z')
+}
+
+const OFFLINE_THRESHOLD_DAYS = 7
+
 export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValue = '', onSearchChange, onSearchSubmit }) {
   const navigate = useNavigate()
   const { user, profile, displayName, signOut } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [offlineLaptops, setOfflineLaptops] = useState([])
   const profileRef = useRef(null)
+  const notifRef = useRef(null)
 
   useEffect(() => {
     function onClickOutside(e) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false)
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
     }
     document.addEventListener('mousedown', onClickOutside)
     return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  // Fetch offline laptops (>7 hari) — refresh tiap 2 menit
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const laptops = await getAllLaptops()
+        const cutoff = Date.now() - OFFLINE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000
+        const stale = laptops
+          .filter(l => {
+            if (!l.last_seen) return false
+            const ts = toUTC(l.last_seen)?.getTime()
+            return ts && ts < cutoff
+          })
+          .map(l => {
+            const ts = toUTC(l.last_seen).getTime()
+            const days = Math.floor((Date.now() - ts) / (24 * 60 * 60 * 1000))
+            return { ...l, daysOffline: days }
+          })
+          .sort((a, b) => b.daysOffline - a.daysOffline)
+          .slice(0, 20)
+        if (!cancelled) setOfflineLaptops(stale)
+      } catch (err) {
+        console.error('[Topbar] Failed to load offline laptops:', err)
+      }
+    }
+    load()
+    const t = setInterval(load, 2 * 60 * 1000)
+    return () => { cancelled = true; clearInterval(t) }
   }, [])
 
   async function handleLogout() {
@@ -83,10 +126,94 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValu
         </form>
 
         {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors border-0 cursor-pointer bg-transparent">
-          <Bell size={18} />
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-        </button>
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setNotifOpen(o => !o)}
+            className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors border-0 cursor-pointer bg-transparent"
+            title={offlineLaptops.length > 0 ? `${offlineLaptops.length} laptop offline > 7 hari` : 'Tidak ada notifikasi'}
+          >
+            <Bell size={18} />
+            {offlineLaptops.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 ring-2 ring-white flex items-center justify-center text-[9px] font-bold text-white tabular-nums">
+                {offlineLaptops.length > 9 ? '9+' : offlineLaptops.length}
+              </span>
+            )}
+          </button>
+
+          <AnimatePresence>
+            {notifOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0,  scale: 1    }}
+                exit={{    opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.12 }}
+                className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
+              >
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 m-0">Notifikasi</p>
+                    <p className="text-[10px] text-slate-500 m-0">Laptop offline lebih dari 7 hari</p>
+                  </div>
+                  {offlineLaptops.length > 0 && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200 tabular-nums">
+                      {offlineLaptops.length}
+                    </span>
+                  )}
+                </div>
+
+                <div className="max-h-96 overflow-y-auto">
+                  {offlineLaptops.length === 0 ? (
+                    <div className="px-4 py-10 text-center">
+                      <CheckCircle2 size={32} className="mx-auto text-emerald-500 mb-2" strokeWidth={1.75} />
+                      <p className="text-sm font-semibold text-slate-700 m-0">Semua laptop aktif</p>
+                      <p className="text-xs text-slate-400 mt-1 m-0">
+                        Tidak ada laptop offline lebih dari 7 hari
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-slate-100">
+                      {offlineLaptops.map(l => (
+                        <li
+                          key={l.id}
+                          onClick={() => {
+                            setNotifOpen(false)
+                            onSearchChange?.(l.hostname || l.serial_number || '')
+                          }}
+                          className="px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-rose-50 ring-1 ring-inset ring-rose-100 flex items-center justify-center flex-shrink-0">
+                              <WifiOff size={14} className="text-rose-600" strokeWidth={2} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-800 m-0 truncate">
+                                {l.hostname || l.serial_number || 'Unknown'}
+                              </p>
+                              <p className="text-xs text-slate-500 m-0 truncate">
+                                {l.user_name || 'Belum di-assign'}
+                              </p>
+                              <p className="text-[11px] text-rose-600 font-semibold mt-0.5 m-0">
+                                Offline {l.daysOffline} hari
+                              </p>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {offlineLaptops.length > 0 && (
+                  <div className="px-3 py-2 border-t border-slate-100 bg-slate-50/40">
+                    <p className="text-[10px] text-slate-500 text-center m-0">
+                      Klik item untuk filter & lihat detail di dashboard
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Profile dropdown */}
         <div className="relative" ref={profileRef}>
