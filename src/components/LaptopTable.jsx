@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Download, X, Cpu, MemoryStick, HardDrive, Monitor, Wifi, MapPin, Clock, CircleDot, Inbox, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
@@ -277,9 +277,19 @@ export default function LaptopTable({ externalSearch = '' }) {
   const [now, setNow] = useState(Date.now())
   const [search, setSearch] = useState('')
 
-  // Sync external search dari Topbar → local search state
+  const tableRef = useRef(null)
+
+  // Sync external search dari Topbar → local search state + auto-scroll ke table
   useEffect(() => {
-    if (externalSearch !== undefined) setSearch(externalSearch)
+    if (externalSearch === undefined) return
+    setSearch(externalSearch)
+    if (externalSearch && tableRef.current) {
+      // Kasih jeda dikit biar React render dulu, baru scroll
+      const t = setTimeout(() => {
+        tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 80)
+      return () => clearTimeout(t)
+    }
   }, [externalSearch])
   const [statusFilter, setStatusFilter] = useState('Semua')
   const [locationFilter, setLocationFilter] = useState('Semua')
@@ -378,10 +388,11 @@ export default function LaptopTable({ externalSearch = '' }) {
   return (
     <>
     <motion.div
+      ref={tableRef}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
-      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden scroll-mt-20"
     >
       {/* Section Header */}
       <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
