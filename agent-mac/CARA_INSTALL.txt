@@ -106,3 +106,33 @@ Kalau mau uninstall:
     cd ~/Desktop/agent-mac && bash uninstall.sh
 
 ================================================================
+  TROUBLESHOOTING — SSID WiFi tidak terbaca di Dashboard
+================================================================
+
+Kalau Mac sudah ke-install tapi kolom "WiFi SSID" di dashboard
+masih kosong, kemungkinan Location Services belum aktif.
+
+Cukup jalankan 1 command di Terminal Mac user:
+
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
+
+Window System Settings akan terbuka langsung ke pane
+Location Services. Lalu user lakukan:
+
+  1. Toggle "Location Services" ke ON (paling atas)
+  2. Scroll ke bawah, izinkan untuk "Terminal" dan "node"
+  3. Tutup System Settings
+
+Setting ini SEKALI saja per Mac — tetap aktif walau Mac restart.
+
+Untuk verifikasi SSID sudah bisa dibaca, jalankan di Terminal:
+
+    /System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I | grep -i ssid
+
+Output benar  : SSID: Angkasa Pura Indonesia
+Output salah  : SSID:  (kosong)  ATAU  SSID: <redacted>
+                -> Location Services masih belum aktif
+
+================================================================
+
+================================================================
