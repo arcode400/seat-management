@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Search, Download, X, Cpu, MemoryStick, HardDrive, Monitor, Wifi, MapPin, Clock, CircleDot } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Search, Download, X, Cpu, MemoryStick, HardDrive, Monitor, Wifi, MapPin, Clock, CircleDot, Inbox, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getActiveBorrows } from '../services/transactionService'
 
@@ -40,13 +41,14 @@ function formatLastSeen(ts) {
 }
 
 function StatusBadge({ status }) {
-  const styles = {
-    Online: { bg: '#DCFCE7', color: '#16A34A' },
-    Offline: { bg: '#FEE2E2', color: '#DC2626' },
-  }
-  const s = styles[status] ?? styles.Offline
+  const isOnline = status === 'Online'
   return (
-    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold ring-1 ring-inset ${
+      isOnline
+        ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+        : 'bg-rose-50 text-rose-700 ring-rose-200'
+    }`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`} />
       {status}
     </span>
   )
@@ -54,15 +56,14 @@ function StatusBadge({ status }) {
 
 function LocationBadge({ wifi_ssid, ip_address, isOffline }) {
   const hasSignal = wifi_ssid || (ip_address && OFFICE_IPS.length > 0)
-  if (!hasSignal) return <span className="text-gray-300 text-xs">—</span>
+  if (!hasSignal) return <span className="text-slate-300 text-xs">—</span>
   const isOffice = isOfficeLocation({ wifi_ssid, ip_address })
 
   // Kalau offline, data SSID itu rekaman terakhir — tampilkan abu-abu + prefix "Terakhir"
   if (isOffline) {
     return (
       <span
-        className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-        style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
+        className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold ring-1 ring-inset bg-slate-50 text-slate-500 ring-slate-200"
         title="Status WiFi terakhir terdeteksi sebelum laptop offline"
       >
         Terakhir {isOffice ? 'di Kantor' : 'di Luar'}
@@ -72,8 +73,11 @@ function LocationBadge({ wifi_ssid, ip_address, isOffline }) {
 
   return (
     <span
-      className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-      style={{ backgroundColor: isOffice ? '#DCFCE7' : '#FEE2E2', color: isOffice ? '#16A34A' : '#DC2626' }}
+      className={`inline-flex px-2 py-0.5 rounded-md text-xs font-semibold ring-1 ring-inset ${
+        isOffice
+          ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+          : 'bg-amber-50 text-amber-700 ring-amber-200'
+      }`}
     >
       {isOffice ? 'Di Kantor' : 'Di Luar'}
     </span>
@@ -341,67 +345,101 @@ export default function LaptopTable() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 h-48 animate-pulse">
-        <div className="h-full bg-gray-100 rounded-lg" />
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex flex-wrap gap-3 p-4 border-b border-slate-100">
+          <div className="flex-1 min-w-48 h-9 bg-slate-100 rounded-lg animate-pulse" />
+          <div className="w-32 h-9 bg-slate-100 rounded-lg animate-pulse" />
+          <div className="w-32 h-9 bg-slate-100 rounded-lg animate-pulse" />
+          <div className="w-24 h-9 bg-slate-100 rounded-lg animate-pulse" />
+        </div>
+        <div className="divide-y divide-slate-100">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="px-4 py-3 flex gap-4 items-center">
+              <div className="w-8 h-3 bg-slate-100 rounded animate-pulse" />
+              <div className="w-32 h-3 bg-slate-100 rounded animate-pulse" />
+              <div className="w-24 h-3 bg-slate-100 rounded animate-pulse" />
+              <div className="flex-1 h-3 bg-slate-100 rounded animate-pulse" />
+              <div className="w-16 h-5 bg-slate-100 rounded-md animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   const COLUMNS = ['No', 'Hostname', 'Serial Number', 'Tipe', 'User', 'Status', 'Last Seen', 'IP Address', 'Location', 'WiFi SSID', 'Lokasi Kantor']
+  const hasActiveFilter = search || statusFilter !== 'Semua' || locationFilter !== 'Semua' || wifiFilter !== 'Semua'
 
   return (
     <>
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
+      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+    >
+      {/* Section Header */}
+      <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800 m-0">Daftar Perangkat</h3>
+          <p className="text-xs text-slate-400 mt-0.5 m-0 tabular-nums">{filtered.length} dari {laptops.length} laptop</p>
+        </div>
+        <button
+          onClick={exportCSV}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer border-0"
+        >
+          <Download size={13} strokeWidth={2.5} />
+          Export CSV
+        </button>
+      </div>
+
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-3 p-4 border-b border-gray-100">
-        <div className="relative flex-1 min-w-48">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="flex flex-wrap gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/40">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Cari hostname, user, atau IP..."
+            placeholder="Cari hostname, user, IP, SN..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:border-blue-400 text-gray-700 placeholder-gray-400"
-            style={{ '--tw-ring-color': 'rgba(13,71,161,0.2)' }}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-slate-700 placeholder-slate-400 transition-colors"
           />
         </div>
 
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 bg-white focus:outline-none focus:ring-2 focus:border-blue-400 cursor-pointer">
+          className="px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 bg-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 cursor-pointer">
           {['Semua Status', 'Online', 'Offline'].map(s => (
             <option key={s} value={s === 'Semua Status' ? 'Semua' : s}>{s}</option>
           ))}
         </select>
 
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 bg-white focus:outline-none focus:ring-2 focus:border-blue-400 cursor-pointer">
+          className="px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 bg-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 cursor-pointer">
           {cities.map(c => <option key={c} value={c}>{c === 'Semua' ? 'Semua Lokasi' : c}</option>)}
         </select>
 
         <select value={wifiFilter} onChange={e => setWifiFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 bg-white focus:outline-none focus:ring-2 focus:border-blue-400 cursor-pointer">
+          className="px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 bg-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 cursor-pointer">
           {wifis.map(w => <option key={w} value={w}>{w === 'Semua' ? 'Semua WiFi' : w}</option>)}
         </select>
 
-        <button
-          onClick={exportCSV}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors cursor-pointer border-0"
-          style={{ backgroundColor: '#0D47A1' }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1565C0'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0D47A1'}
-        >
-          <Download size={14} />
-          Export
-        </button>
+        {hasActiveFilter && (
+          <button
+            onClick={() => { setSearch(''); setStatusFilter('Semua'); setLocationFilter('Semua'); setWifiFilter('Semua') }}
+            className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-0 bg-transparent flex items-center gap-1"
+          >
+            <X size={12} /> Reset
+          </button>
+        )}
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/50">
+            <tr className="border-b border-slate-200 bg-slate-50/70">
               {COLUMNS.map(h => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                   {h}
                 </th>
               ))}
@@ -410,10 +448,20 @@ export default function LaptopTable() {
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-12 text-center text-gray-400 text-sm">
-                  {search || statusFilter !== 'Semua' || locationFilter !== 'Semua' || wifiFilter !== 'Semua'
-                    ? 'Tidak ada data yang cocok dengan filter.'
-                    : 'Belum ada laptop terdaftar.'}
+                <td colSpan={11} className="px-4 py-16">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                      <Inbox size={22} className="text-slate-400" strokeWidth={1.75} />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700 m-0 mb-1">
+                      {hasActiveFilter ? 'Tidak ada hasil' : 'Belum ada laptop terdaftar'}
+                    </p>
+                    <p className="text-xs text-slate-400 m-0">
+                      {hasActiveFilter
+                        ? 'Coba ubah kata kunci atau reset filter di atas'
+                        : 'Laptop akan muncul di sini setelah agent ter-install & ping ke server'}
+                    </p>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -422,26 +470,25 @@ export default function LaptopTable() {
                 const status = getLaptopStatus(laptop, now)
                 return (
                   <tr key={laptop.id} onClick={() => setSelectedLaptop({ laptop, user, status })}
-                    className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors cursor-pointer">
-                    <td className="px-4 py-3 text-xs text-gray-400 text-center w-8">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                    <td className="px-4 py-3 font-semibold text-gray-800">{laptop.hostname ?? <span className="text-gray-300">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{laptop.serial_number ?? <span className="text-gray-300">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{laptop.brand_type ?? <span className="text-gray-300">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-600">{user ?? <span className="text-gray-300">—</span>}</td>
+                    className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors cursor-pointer">
+                    <td className="px-4 py-3 text-xs text-slate-400 text-center w-10 tabular-nums">{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-800">{laptop.hostname ?? <span className="text-slate-300">—</span>}</td>
+                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{laptop.serial_number ?? <span className="text-slate-300">—</span>}</td>
+                    <td className="px-4 py-3 text-slate-600 text-xs whitespace-nowrap">{laptop.brand_type ?? <span className="text-slate-300">—</span>}</td>
+                    <td className="px-4 py-3 text-slate-700">{user ?? <span className="text-slate-300">—</span>}</td>
                     <td
                       className="px-4 py-3"
                       title={status === 'Offline' && laptop.last_seen ? `Terakhir online: ${formatLastSeen(laptop.last_seen)}` : ''}
                     >
                       <StatusBadge status={status} />
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{formatLastSeen(laptop.last_seen)}</td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{laptop.ip_address ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{formatLastSeen(laptop.last_seen)}</td>
+                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{laptop.ip_address ?? '-'}</td>
+                    <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                       {laptop.city && laptop.country ? `${laptop.city}, ${laptop.country}` : '-'}
                     </td>
                     <td
-                      className="px-4 py-3 text-xs"
-                      style={{ color: status === 'Offline' ? '#9CA3AF' : '#6B7280', fontStyle: status === 'Offline' ? 'italic' : 'normal' }}
+                      className={`px-4 py-3 text-xs ${status === 'Offline' ? 'text-slate-400 italic' : 'text-slate-600'}`}
                       title={status === 'Offline' ? 'WiFi terakhir terdeteksi (laptop sekarang offline)' : ''}
                     >
                       {laptop.wifi_ssid ?? '-'}
@@ -457,28 +504,29 @@ export default function LaptopTable() {
 
       {/* Pagination */}
       {filtered.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-gray-100">
-          <p className="text-xs text-gray-500">
-            Menampilkan {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} data
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50/40">
+          <p className="text-xs text-slate-500 tabular-nums">
+            Menampilkan <span className="font-semibold text-slate-700">{Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)}</span> dari <span className="font-semibold text-slate-700">{filtered.length}</span> data
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer bg-white"
+              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium border border-slate-200 rounded-md text-slate-600 hover:bg-white hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer bg-white"
             >
-              ‹
+              <ChevronLeft size={13} strokeWidth={2.5} />
             </button>
             {getPageNumbers(page, totalPages).map((p, i) =>
               p === '...'
-                ? <span key={`dot-${i}`} className="px-2 text-xs text-gray-400">…</span>
+                ? <span key={`dot-${i}`} className="px-2 text-xs text-slate-400">…</span>
                 : <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className="px-2.5 py-1.5 text-xs rounded-md border transition-colors cursor-pointer"
-                    style={page === p
-                      ? { backgroundColor: '#0D47A1', color: 'white', borderColor: '#0D47A1' }
-                      : { backgroundColor: 'white', color: '#4B5563', borderColor: '#E5E7EB' }}
+                    className={`min-w-[28px] px-2 py-1.5 text-xs font-semibold rounded-md border transition-colors cursor-pointer tabular-nums ${
+                      page === p
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-white hover:border-slate-300'
+                    }`}
                   >
                     {p}
                   </button>
@@ -486,14 +534,14 @@ export default function LaptopTable() {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer bg-white"
+              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium border border-slate-200 rounded-md text-slate-600 hover:bg-white hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer bg-white"
             >
-              ›
+              <ChevronRight size={13} strokeWidth={2.5} />
             </button>
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
 
     {selectedLaptop && (
       <LaptopDetailModal
