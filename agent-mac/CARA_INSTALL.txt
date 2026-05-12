@@ -84,6 +84,16 @@ Step 9 — Jalankan setup
   (pakai "bash setup.sh", bukan "./setup.sh" — supaya tidak perlu
    chmod terlebih dahulu)
 
+  Setelah selesai install, script akan otomatis test apakah agent
+  bisa membaca SSID WiFi. Kalau belum bisa:
+
+    - Script akan auto-buka System Settings ke pane Location Services
+    - User tinggal toggle ON di paling atas
+    - Scroll ke bawah, izinkan untuk "Terminal" dan "node"
+    - Tutup Settings, kembali ke Terminal, tekan Enter
+
+  Setting Location ini SEKALI aja — tetap aktif walaupun Mac restart.
+
   Tunggu sampai muncul tulisan:
   "Agent akan otomatis berjalan setiap kali Mac menyala."
 
