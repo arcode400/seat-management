@@ -76,17 +76,13 @@ Step 8 — Masuk ke folder agent-mac
 
 ----------------------------------------------------------------
 
-Step 9 — Beri izin eksekusi
+Step 9 — Jalankan setup
   Ketik di Terminal:
 
-    chmod +x setup.sh uninstall.sh
+    bash setup.sh
 
-----------------------------------------------------------------
-
-Step 10 — Jalankan setup
-  Ketik di Terminal:
-
-    ./setup.sh
+  (pakai "bash setup.sh", bukan "./setup.sh" — supaya tidak perlu
+   chmod terlebih dahulu)
 
   Tunggu sampai muncul tulisan:
   "Agent akan otomatis berjalan setiap kali Mac menyala."
@@ -97,6 +93,6 @@ Step 10 — Jalankan setup
 
 Kalau mau uninstall:
 
-    cd ~/Desktop/agent-mac && ./uninstall.sh
+    cd ~/Desktop/agent-mac && bash uninstall.sh
 
 ================================================================

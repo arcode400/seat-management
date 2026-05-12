@@ -41,3 +41,4 @@ agent-mac/.env
 node-installer.msi
 seat-agent-windows.zip
 seat-agent-mac.zip
+seat-agent-mac.tar.gz

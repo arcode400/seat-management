@@ -81,21 +81,9 @@ OFFICE_WIFI=Angkasa Pura Indonesia
   $archiveOut = Join-Path $root $OutputArchive
   if (Test-Path $archiveOut) { Remove-Item $archiveOut -Force }
 
-  if ($Format -eq 'targz') {
-    # tar.gz preserve Unix permissions — setup.sh & uninstall.sh tetap chmod +x setelah extract.
-    # tar.exe built-in di Windows 10/11 (bsdtar).
-    # Pakai --mode=0755 buat *.sh biar executable bit ke-set walaupun source dari NTFS.
-    Push-Location $temp
-    try {
-      # tar otomatis include semua file di current dir, --mode set permission untuk semua entries
-      & tar.exe -czf $archiveOut --mode='ug+rwx,o+rx' .
-      if ($LASTEXITCODE -ne 0) { throw "tar failed dengan exit code $LASTEXITCODE" }
-    } finally {
-      Pop-Location
-    }
-  } else {
-    Compress-Archive -Path "$temp\*" -DestinationPath $archiveOut -Force
-  }
+  # Pakai Compress-Archive (zip) — tar.exe Windows gak support --mode.
+  # User Mac jalanin pakai `bash setup.sh` (gak butuh exec bit).
+  Compress-Archive -Path "$temp\*" -DestinationPath $archiveOut -Force
 
   Remove-Item $temp -Recurse -Force
 
@@ -104,8 +92,8 @@ OFFICE_WIFI=Angkasa Pura Indonesia
 }
 
 Write-Host "=== Build Agent Installer ===" -ForegroundColor Cyan
-Build-Zip -SourceDir 'agent'     -OutputArchive 'seat-agent-windows.zip'   -Format 'zip'
-Build-Zip -SourceDir 'agent-mac' -OutputArchive 'seat-agent-mac.tar.gz'    -Format 'targz'
+Build-Zip -SourceDir 'agent'     -OutputArchive 'seat-agent-windows.zip' -Format 'zip'
+Build-Zip -SourceDir 'agent-mac' -OutputArchive 'seat-agent-mac.zip'     -Format 'zip'
 
 Write-Host ""
 Write-Host "Selanjutnya:" -ForegroundColor Cyan
