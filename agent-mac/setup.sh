@@ -103,5 +103,51 @@ launchctl unload "$PLIST_PATH" 2>/dev/null
 launchctl load "$PLIST_PATH"
 echo "[OK] Agent berhasil diinstall dan sedang berjalan"
 echo ""
+
+# ─── Setup Location Services (untuk baca SSID WiFi) ──────────────────────────
+echo "================================================"
+echo "  PENTING: Enable Location Services"
+echo "================================================"
+echo ""
+echo "Agar agent bisa membaca SSID WiFi di macOS 12+,"
+echo "Location Services HARUS aktif."
+echo ""
+
+# Coba baca SSID — kalau hasilnya kosong/<redacted>, Location belum diizinkan
+SSID_OUT=$(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I 2>/dev/null | awk -F': ' '/ SSID/ {print $2}' | head -1)
+
+if [ -z "$SSID_OUT" ] || [ "$SSID_OUT" = "<redacted>" ]; then
+    echo "[!] Location Services BELUM diizinkan."
+    echo ""
+    echo "Saya akan buka System Settings sekarang. Mohon lakukan:"
+    echo "  1. Toggle 'Location Services' ke ON (paling atas)"
+    echo "  2. Scroll ke bawah, izinkan untuk 'Terminal' DAN 'node'"
+    echo "  3. Tutup System Settings"
+    echo ""
+    echo "Setting ini sekali aja — otomatis aktif terus walaupun Mac di-restart."
+    echo ""
+    read -p "Tekan Enter untuk buka System Settings..."
+
+    # Buka langsung ke pane Location Services
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices" 2>/dev/null \
+        || open "/System/Library/PreferencePanes/Security.prefPane"
+
+    echo ""
+    read -p "Setelah selesai enable Location Services, tekan Enter untuk lanjut..."
+
+    # Re-test
+    SSID_RECHECK=$(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I 2>/dev/null | awk -F': ' '/ SSID/ {print $2}' | head -1)
+    if [ -n "$SSID_RECHECK" ] && [ "$SSID_RECHECK" != "<redacted>" ]; then
+        echo "[OK] Location Services aktif — SSID terdeteksi: $SSID_RECHECK"
+    else
+        echo "[!] SSID masih belum kebaca. Coba enable Location Services manual,"
+        echo "    atau abaikan jika user pakai LAN (akan fallback via IP)."
+    fi
+else
+    echo "[OK] Location Services aktif — SSID terdeteksi: $SSID_OUT"
+fi
+
+echo ""
+echo "================================================"
 echo "Agent akan otomatis berjalan setiap kali Mac menyala."
 echo "================================================"
