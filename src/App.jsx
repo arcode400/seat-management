@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
+import WelcomeSection from './components/WelcomeSection'
 import DashboardCards from './components/DashboardCards'
 import DashboardCharts from './components/DashboardCharts'
 import LocationAlerts from './components/LocationAlerts'
@@ -50,6 +51,9 @@ function SectionCard({ title, children }) {
 export default function App() {
   const [activeTab, setActiveTab] = useState('Dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    typeof window !== 'undefined' && localStorage.getItem('seat-sidebar-collapsed') === '1'
+  )
   const [refreshLaptops, setRefreshLaptops] = useState(0)
   const [editingLaptop, setEditingLaptop] = useState(null)
   const { user, isSuperAdmin, isAdmin, isStaff } = useAuth()
@@ -73,36 +77,50 @@ export default function App() {
   }, [user])
 
   return (
-    <div style={{ backgroundColor: '#F5F7FA' }} className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onCollapseChange={setSidebarCollapsed}
       />
 
-      <div className="md:ml-60 flex flex-col min-h-screen">
-        <Topbar onMenuToggle={() => setSidebarOpen(prev => !prev)} />
+      <div
+        className={`flex flex-col min-h-screen transition-[margin] duration-200 ease-out ${
+          sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-60'
+        }`}
+      >
+        <Topbar
+          onMenuToggle={() => setSidebarOpen(prev => !prev)}
+          pageTitle={PAGE_TITLES[activeTab] ?? activeTab}
+        />
 
-        <main className="flex-1 p-6">
-          <div className="mb-5">
-            <h1 className="text-xl font-bold m-0" style={{ color: '#1F2937' }}>
-              {PAGE_TITLES[activeTab] ?? activeTab}
-            </h1>
-            {isStaff && (
-              <p className="text-xs text-amber-500 mt-0.5 m-0">
-                Mode Teknisi — bisa buat BAP pengembalian, input issues & komplain, lihat aset
-              </p>
-            )}
-          </div>
-
-          {activeTab === 'Dashboard' && (
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
+          {activeTab === 'Dashboard' ? (
             <>
+              <WelcomeSection />
+              {isStaff && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+                  Mode Teknisi — bisa buat BAP pengembalian, input issues & komplain, lihat aset
+                </div>
+              )}
               <LocationAlerts />
               <DashboardCards />
               <DashboardCharts />
               <LaptopTable />
             </>
+          ) : (
+            <div className="mb-5">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 m-0">
+                {PAGE_TITLES[activeTab] ?? activeTab}
+              </h1>
+              {isStaff && (
+                <p className="text-xs text-amber-600 mt-1 m-0">
+                  Mode Teknisi — bisa buat BAP pengembalian, input issues & komplain, lihat aset
+                </p>
+              )}
+            </div>
           )}
 
           {activeTab === 'Laptops' && (
