@@ -10,7 +10,7 @@ const ROLE_BADGES = {
   staff:       { label: 'Teknisi',     cls: 'bg-slate-100 text-slate-600 ring-slate-200' },
 }
 
-export default function Topbar({ onMenuToggle, pageTitle, breadcrumb }) {
+export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValue = '', onSearchChange, onSearchSubmit }) {
   const navigate = useNavigate()
   const { user, profile, displayName, signOut } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
@@ -58,15 +58,29 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb }) {
       <div className="flex items-center gap-2 sm:gap-3">
 
         {/* Search bar — hidden mobile */}
-        <div className="hidden lg:flex items-center w-64 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 focus-within:bg-white focus-within:border-blue-400 transition-colors">
+        <form
+          onSubmit={(e) => { e.preventDefault(); onSearchSubmit?.(searchValue) }}
+          className="hidden lg:flex items-center w-64 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 focus-within:bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-colors"
+        >
           <Search size={15} className="text-slate-400 mr-2 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Cari hostname, user, SN..."
+            value={searchValue}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder="Cari hostname, user, SN, IP..."
             className="flex-1 bg-transparent border-0 outline-none text-sm text-slate-700 placeholder-slate-400 min-w-0"
           />
-          <kbd className="hidden xl:inline ml-2 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white border border-slate-200 rounded">⌘K</kbd>
-        </div>
+          {searchValue && (
+            <button
+              type="button"
+              onClick={() => onSearchChange?.('')}
+              className="ml-1 p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors border-0 bg-transparent cursor-pointer"
+              title="Clear"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          )}
+        </form>
 
         {/* Notifications */}
         <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors border-0 cursor-pointer bg-transparent">

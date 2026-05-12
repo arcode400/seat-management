@@ -270,12 +270,17 @@ function LaptopDetailModal({ laptop, status, user, onClose }) {
   )
 }
 
-export default function LaptopTable() {
+export default function LaptopTable({ externalSearch = '' }) {
   const [laptops, setLaptops] = useState([])
   const [borrowMap, setBorrowMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(Date.now())
   const [search, setSearch] = useState('')
+
+  // Sync external search dari Topbar → local search state
+  useEffect(() => {
+    if (externalSearch !== undefined) setSearch(externalSearch)
+  }, [externalSearch])
   const [statusFilter, setStatusFilter] = useState('Semua')
   const [locationFilter, setLocationFilter] = useState('Semua')
   const [wifiFilter, setWifiFilter] = useState('Semua')

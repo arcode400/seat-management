@@ -54,6 +54,7 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     typeof window !== 'undefined' && localStorage.getItem('seat-sidebar-collapsed') === '1'
   )
+  const [globalSearch, setGlobalSearch] = useState('')
   const [refreshLaptops, setRefreshLaptops] = useState(0)
   const [editingLaptop, setEditingLaptop] = useState(null)
   const { user, isSuperAdmin, isAdmin, isStaff } = useAuth()
@@ -94,6 +95,16 @@ export default function App() {
         <Topbar
           onMenuToggle={() => setSidebarOpen(prev => !prev)}
           pageTitle={PAGE_TITLES[activeTab] ?? activeTab}
+          searchValue={globalSearch}
+          onSearchChange={(v) => {
+            setGlobalSearch(v)
+            // Kalau user mulai ngetik & belum di Dashboard, lompat ke Dashboard
+            if (v && activeTab !== 'Dashboard') setActiveTab('Dashboard')
+          }}
+          onSearchSubmit={(v) => {
+            setGlobalSearch(v)
+            setActiveTab('Dashboard')
+          }}
         />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
@@ -108,7 +119,7 @@ export default function App() {
               <LocationAlerts />
               <DashboardCards />
               <DashboardCharts />
-              <LaptopTable />
+              <LaptopTable externalSearch={globalSearch} />
             </>
           ) : (
             <div className="mb-5">
