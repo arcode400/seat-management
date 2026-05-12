@@ -47,18 +47,28 @@ function Build-Zip {
   $temp = Join-Path $env:TEMP "seat-agent-build-$SourceDir"
   if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
 
-  # Copy semua kecuali node_modules, .env, dan log
+  # Copy semua kecuali node_modules, .env asli, dan log
   $exclude = @('node_modules', '.env', '*.log')
   Copy-Item $src $temp -Recurse -Exclude $exclude
 
-  # Generate .env contoh — user IT tinggal isi value-nya di laptop user kalau perlu
-  # (default value di-baked supaya plug-and-play)
-  $envContent = @"
+  # Auto-embed .env asli dari folder agent lokal (yang ada anon key beneran)
+  # → user IT terima beres, gak perlu edit .env manual lagi
+  $envSource = Join-Path $src '.env'
+  $envTarget = Join-Path $temp '.env'
+  if (Test-Path $envSource) {
+    Copy-Item $envSource $envTarget -Force
+    Write-Host "    + .env auto-embedded dari $SourceDir\.env (anon key sudah di-bake in)"
+  } else {
+    # Fallback: bikin template kosong + warning
+    Write-Host "[WARN] $envSource tidak ditemukan. Bikin template kosong." -ForegroundColor Yellow
+    Write-Host "       User IT harus edit C:\SeatAgent\.env manual setelah install." -ForegroundColor Yellow
+    $envContent = @"
 SUPABASE_URL=https://osnsesvuiamjtblansxd.supabase.co
 SUPABASE_ANON_KEY=PASTE_ANON_KEY_DI_SINI
 OFFICE_WIFI=Angkasa Pura Indonesia
 "@
-  $envContent | Out-File (Join-Path $temp '.env') -Encoding utf8
+    $envContent | Out-File $envTarget -Encoding utf8
+  }
 
   # Bundle Node MSI HANYA buat zip Windows (mac pakai installer beda)
   if ($SourceDir -eq 'agent' -and (Test-Path $nodeMsiPath)) {
@@ -87,5 +97,5 @@ Write-Host "  1. Buka Supabase Dashboard -> Storage -> bucket 'agent-updates'"
 Write-Host "  2. Upload (overwrite) kedua file zip di atas"
 Write-Host "  3. Test tombol download di dashboard web"
 Write-Host ""
-Write-Host "[!] Sebelum upload, edit .env di dalam zip & isi SUPABASE_ANON_KEY yang asli." -ForegroundColor Yellow
-Write-Host "    Atau biarin user IT yang isi pas install (lebih aman)."
+Write-Host "[i] Zip sudah include .env asli (anon key dari folder agent\.env)." -ForegroundColor Cyan
+Write-Host "    User IT tinggal: extract zip -> klik setup.bat -> selesai. Plug & play."
