@@ -21,10 +21,13 @@ dist-ssr
 *.7z
 
 # Environment variables - jangan di-upload!
+# (TAPI .env.example DI-COMMIT — itu template recovery, value-nya public anon key)
 .env
-.env.*
 agent/.env
 agent-mac/.env
+!.env.example
+!agent/.env.example
+!agent-mac/.env.example
 
 # Editor directories and files
 .vscode/*
