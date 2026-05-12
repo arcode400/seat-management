@@ -212,11 +212,11 @@ export default function DashboardCards() {
               Windows
             </a>
             <a
-              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-mac.zip`}
+              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/agent-updates/seat-agent-mac.tar.gz`}
               download
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer transition-colors no-underline"
               style={{ backgroundColor: '#374151', color: 'white' }}
-              title="Download installer agent untuk macOS — extract & jalankan setup.sh"
+              title="Download installer agent untuk macOS — extract (double-click) & jalankan ./setup.sh di Terminal"
             >
               <Download size={14} />
               macOS

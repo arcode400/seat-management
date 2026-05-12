@@ -34,8 +34,9 @@ if (-not (Test-Path $nodeMsiPath)) {
 
 function Build-Zip {
   param(
-    [string]$SourceDir,   # nama folder agent (mis. 'agent' / 'agent-mac')
-    [string]$OutputZip    # nama file zip output
+    [string]$SourceDir,        # nama folder agent (mis. 'agent' / 'agent-mac')
+    [string]$OutputArchive,    # nama file output
+    [string]$Format = 'zip'    # 'zip' untuk Windows, 'targz' untuk Mac (preserve chmod +x)
   )
 
   $src = Join-Path $root $SourceDir
@@ -76,20 +77,35 @@ OFFICE_WIFI=Angkasa Pura Indonesia
     Write-Host "    + node-installer.msi (offline Node installer)"
   }
 
-  # Bersihkan file zip lama kalau ada
-  $zipOut = Join-Path $root $OutputZip
-  if (Test-Path $zipOut) { Remove-Item $zipOut -Force }
+  # Bersihkan file output lama kalau ada
+  $archiveOut = Join-Path $root $OutputArchive
+  if (Test-Path $archiveOut) { Remove-Item $archiveOut -Force }
 
-  Compress-Archive -Path "$temp\*" -DestinationPath $zipOut -Force
+  if ($Format -eq 'targz') {
+    # tar.gz preserve Unix permissions — setup.sh & uninstall.sh tetap chmod +x setelah extract.
+    # tar.exe built-in di Windows 10/11 (bsdtar).
+    # Pakai --mode=0755 buat *.sh biar executable bit ke-set walaupun source dari NTFS.
+    Push-Location $temp
+    try {
+      # tar otomatis include semua file di current dir, --mode set permission untuk semua entries
+      & tar.exe -czf $archiveOut --mode='ug+rwx,o+rx' .
+      if ($LASTEXITCODE -ne 0) { throw "tar failed dengan exit code $LASTEXITCODE" }
+    } finally {
+      Pop-Location
+    }
+  } else {
+    Compress-Archive -Path "$temp\*" -DestinationPath $archiveOut -Force
+  }
+
   Remove-Item $temp -Recurse -Force
 
-  $size = [math]::Round((Get-Item $zipOut).Length / 1KB, 1)
-  Write-Host "[OK] $OutputZip dibuat ($size KB)" -ForegroundColor Green
+  $size = [math]::Round((Get-Item $archiveOut).Length / 1KB, 1)
+  Write-Host "[OK] $OutputArchive dibuat ($size KB)" -ForegroundColor Green
 }
 
 Write-Host "=== Build Agent Installer ===" -ForegroundColor Cyan
-Build-Zip -SourceDir 'agent'     -OutputZip 'seat-agent-windows.zip'
-Build-Zip -SourceDir 'agent-mac' -OutputZip 'seat-agent-mac.zip'
+Build-Zip -SourceDir 'agent'     -OutputArchive 'seat-agent-windows.zip'   -Format 'zip'
+Build-Zip -SourceDir 'agent-mac' -OutputArchive 'seat-agent-mac.tar.gz'    -Format 'targz'
 
 Write-Host ""
 Write-Host "Selanjutnya:" -ForegroundColor Cyan
