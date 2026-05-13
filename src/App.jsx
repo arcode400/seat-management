@@ -48,8 +48,23 @@ function SectionCard({ title, children }) {
   )
 }
 
+const TAB_STORAGE_KEY = 'seat-active-tab'
+const VALID_TABS = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'BAKhusus', 'FormKomplain', 'Users', 'Logs', 'Settings']
+
+function loadInitialTab() {
+  if (typeof window === 'undefined') return 'Dashboard'
+  try {
+    const saved = localStorage.getItem(TAB_STORAGE_KEY)
+    return saved && VALID_TABS.includes(saved) ? saved : 'Dashboard'
+  } catch { return 'Dashboard' }
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('Dashboard')
+  const [activeTab, setActiveTabState] = useState(loadInitialTab)
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab)
+    try { localStorage.setItem(TAB_STORAGE_KEY, tab) } catch {}
+  }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     typeof window !== 'undefined' && localStorage.getItem('seat-sidebar-collapsed') === '1'
