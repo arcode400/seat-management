@@ -51,6 +51,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
     : NAV_ITEMS.filter(i => i.key !== 'Settings' || isAdmin)
 
   const initials = (displayName || 'U').slice(0, 2).toUpperCase()
+  const avatarUrl = profile?.avatar_url
   const roleLabel = profile?.role === 'super_admin' ? 'Super Admin'
                   : profile?.role === 'admin'       ? 'Admin'
                   :                                   'Teknisi'
@@ -167,8 +168,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
           {!collapsed ? (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-800 transition-colors group">
               <div className="relative flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold">
-                  {initials}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                    : initials}
                 </div>
                 <Circle size={8} className="absolute -bottom-0.5 -right-0.5 fill-emerald-500 text-slate-900" strokeWidth={3} />
               </div>
@@ -180,8 +183,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
           ) : (
             <div className="flex justify-center py-1" title={`${displayName} · ${roleLabel}`}>
               <div className="relative">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold">
-                  {initials}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                    : initials}
                 </div>
                 <Circle size={8} className="absolute -bottom-0.5 -right-0.5 fill-emerald-500 text-slate-900" strokeWidth={3} />
               </div>

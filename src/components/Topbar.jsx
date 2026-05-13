@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, Bell, LogOut, Search, ChevronRight, User as UserIcon, Settings as SettingsIcon, WifiOff, CheckCircle2 } from 'lucide-react'
+import { Menu, Bell, LogOut, Search, ChevronRight, User as UserIcon, Settings as SettingsIcon, WifiOff, CheckCircle2, Camera } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getAllLaptops } from '../services/laptopService'
+import ProfileModal from './ProfileModal'
 
 const ROLE_BADGES = {
   super_admin: { label: 'Super Admin', cls: 'bg-amber-50 text-amber-700 ring-amber-200' },
@@ -21,9 +22,10 @@ const OFFLINE_THRESHOLD_DAYS = 7
 
 export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValue = '', onSearchChange, onSearchSubmit }) {
   const navigate = useNavigate()
-  const { user, profile, displayName, signOut } = useAuth()
+  const { user, profile, displayName, signOut, refreshProfile } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [offlineLaptops, setOfflineLaptops] = useState([])
   const profileRef = useRef(null)
   const notifRef = useRef(null)
@@ -75,6 +77,7 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValu
 
   const initials = (displayName || 'U').slice(0, 2).toUpperCase()
   const role = ROLE_BADGES[profile?.role] || ROLE_BADGES.staff
+  const avatarUrl = profile?.avatar_url
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-20 sticky top-0">
@@ -221,8 +224,10 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValu
             onClick={() => setProfileOpen(o => !o)}
             className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-slate-100 transition-colors border-0 cursor-pointer bg-transparent"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {initials}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+              {avatarUrl
+                ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                : initials}
             </div>
             <div className="hidden sm:block text-left leading-tight">
               <p className="text-xs font-semibold text-slate-800 m-0 truncate max-w-[140px]">{displayName}</p>
@@ -242,8 +247,10 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValu
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-sm font-bold">
-                      {initials}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+                      {avatarUrl
+                        ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                        : initials}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-800 m-0 truncate">{displayName}</p>
@@ -258,11 +265,11 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValu
                 {/* Items */}
                 <div className="py-1">
                   <button
-                    disabled
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-400 cursor-not-allowed border-0 bg-transparent"
+                    onClick={() => { setProfileOpen(false); setProfileModalOpen(true) }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer border-0 bg-transparent transition-colors"
                   >
-                    <UserIcon size={15} />
-                    Profile <span className="ml-auto text-[10px] font-semibold text-slate-300">SOON</span>
+                    <Camera size={15} />
+                    Foto Profile
                   </button>
                   <button
                     disabled
@@ -287,6 +294,12 @@ export default function Topbar({ onMenuToggle, pageTitle, breadcrumb, searchValu
           </AnimatePresence>
         </div>
       </div>
+
+      <ProfileModal
+        open={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        onUpdated={() => refreshProfile?.()}
+      />
     </header>
   )
 }

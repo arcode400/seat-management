@@ -71,9 +71,14 @@ export function AuthProvider({ children }) {
   const isTeknisi    = isStaff // alias semantik: role 'staff' di DB = "Teknisi" di UI
   const canCreateBAP = isAdmin || isTeknisi
   const displayName  = profile?.full_name || user?.email?.split('@')[0] || 'User'
+  const avatarUrl    = profile?.avatar_url || null
+
+  async function refreshProfile() {
+    if (user) await loadProfile(user)
+  }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isSuperAdmin, isAdmin, isStaff, isTeknisi, canCreateBAP, displayName, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, isSuperAdmin, isAdmin, isStaff, isTeknisi, canCreateBAP, displayName, avatarUrl, refreshProfile, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )
