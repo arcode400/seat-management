@@ -461,15 +461,6 @@ export default function BeritaAcaraPengembalianForm({ onCreated, initialSn }) {
             <User size={11} /> Pihak Pertama — Yang Mengembalikan
           </p>
           <div className="space-y-3">
-            <Field label="Pilih dari daftar user (opsional)">
-              <select onChange={handlePengembalianChange} defaultValue=""
-                className={`${inputClass} cursor-pointer`} {...focus}>
-                <option value="">— Pilih user untuk auto-isi —</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.name ?? u.nama} ({u.unit ?? '—'})</option>
-                ))}
-              </select>
-            </Field>
             <Field label="Nama">
               <input name="pengembalian_nama" value={form.pengembalian_nama} onChange={handleChange}
                 placeholder="Nama lengkap (opsional)" className={inputClass} {...focus} />
