@@ -909,7 +909,10 @@ export default function PeminjamanPage() {
                               ) : (
                                 <>
                                   <p className="font-medium text-gray-800">{r.pengembalian_nama || '—'}</p>
-                                  <p className="text-xs text-gray-400"><KondisiBadge unit={r.kondisi_unit} /></p>
+                                  <p className="text-xs text-gray-400 flex items-center gap-1.5 flex-wrap">
+                                    <KondisiBadge unit={r.kondisi_unit} />
+                                    <SignStatusBadge signed={!!r.signature_pengembalian} hasName={!!r.pengembalian_nama} />
+                                  </p>
                                 </>
                               )}
                             </td>
