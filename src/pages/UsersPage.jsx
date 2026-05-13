@@ -149,9 +149,10 @@ export default function UsersPage({ isSuperAdmin }) {
                   <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: '#0D47A1' }}>
-                          <span className="text-white text-xs font-bold">{p.email.slice(0, 2).toUpperCase()}</span>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                          {p.avatar_url
+                            ? <img src={p.avatar_url} alt={p.full_name || p.email} className="w-full h-full object-cover" />
+                            : (p.full_name || p.email).slice(0, 2).toUpperCase()}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-800 m-0">
