@@ -24,13 +24,30 @@ export default function PublicKomplainSignPage() {
   const [signature, setSignature] = useState(null)
 
   useEffect(() => {
+    // Reset state setiap id berubah — penting kalau user navigate antar link di tab yang sama
+    setLoading(true)
+    setError(null)
+    setKomplain(null)
+    setSubmitted(false)
+    setAgree(false)
+    setSignature(null)
+    setForm({
+      pelapor_nama: '',
+      pelapor_unit_kerja: '',
+      pelapor_lokasi_kerja: '',
+      user_jabatan: '',
+      masalah_komplain: '',
+      kronologi: '',
+    })
+
     async function load() {
       try {
         const { data, error } = await supabase.rpc('get_komplain_public', { p_id: id })
         if (error) throw error
         if (!data) throw new Error('Form Komplain tidak ditemukan.')
         setKomplain(data)
-        if (data.signature_pelapor) setSubmitted(true)
+        // Eksplisit set submitted berdasarkan data terbaru (bukan biarin default state)
+        setSubmitted(!!data.signature_pelapor)
         // Pre-fill kalau IT udah ngetik sesuatu
         setForm(f => ({
           ...f,

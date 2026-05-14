@@ -17,6 +17,15 @@ export default function PublicBASTSignPage() {
   const [form, setForm] = useState({ nama: '', nip: '', jabatan: '', unit: '', signature: null })
 
   useEffect(() => {
+    // Reset state setiap id berubah — penting kalau user navigate antar link di tab yang sama
+    setLoading(true)
+    setError(null)
+    setBast(null)
+    setSubmitted(false)
+    setReadCheck(false)
+    setConfirmCheck(false)
+    setForm({ nama: '', nip: '', jabatan: '', unit: '', signature: null })
+
     async function load() {
       try {
         const { data, error } = await supabase.rpc('get_bast_public', { p_id: id })
@@ -30,7 +39,7 @@ export default function PublicBASTSignPage() {
           jabatan: data.penerima_jabatan || '',
           unit:    data.penerima_unit    || '',
         }))
-        if (data.signature_penerima) setSubmitted(true)
+        setSubmitted(!!data.signature_penerima)
       } catch (err) {
         setError(err.message)
       } finally {

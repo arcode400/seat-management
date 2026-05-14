@@ -18,13 +18,22 @@ export default function PublicBAPSignPage() {
   const agreedAll = readBA && agreeTnc
 
   useEffect(() => {
+    // Reset state setiap id berubah — penting kalau user navigate antar link di tab yang sama
+    setLoading(true)
+    setError(null)
+    setBap(null)
+    setSubmitted(false)
+    setReadBA(false)
+    setAgreeTnc(false)
+    setSignature(null)
+
     async function load() {
       try {
         const { data, error } = await supabase.rpc('get_bap_public', { p_id: id })
         if (error) throw error
         if (!data) throw new Error('Berita Acara Pengembalian tidak ditemukan.')
         setBap(data)
-        if (data.signature_pengembalian) setSubmitted(true)
+        setSubmitted(!!data.signature_pengembalian)
       } catch (err) {
         setError(err.message)
       } finally {
