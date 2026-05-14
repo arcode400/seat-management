@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Save, Wrench } from 'lucide-react'
+import { X, Save, Wrench, Lock } from 'lucide-react'
 import { updateFormKomplain } from '../services/formKomplainService'
 import { useAuth } from '../context/AuthContext'
 import SignaturePad from './SignaturePad'
@@ -35,30 +35,47 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
     return (e) => setForm(f => ({ ...f, [k]: e.target.value }))
   }
 
+  // Sudah TTD = locked, hanya nama_barang/type/SN yang bisa diubah
+  const isSigned = !!fk?.signature_penerima
+
   async function handleSave() {
     if (!form?.id) return
-    if (!teknisiSignature) {
-      setError('Tanda tangan teknisi wajib diisi sebelum simpan.')
-      return
-    }
-    if (!form.penerima_nama?.trim()) {
-      setError('Nama teknisi wajib diisi.')
-      return
-    }
+
     setSaving(true); setError(null)
     try {
-      const payload = {
-        nama_barang:         form.nama_barang         || null,
-        type_barang:         form.type_barang         || null,
-        serial_number:       form.serial_number       || null,
-        penerima_nama:       form.penerima_nama       || null,
-        penerima_unit_kerja: form.penerima_unit_kerja || null,
-        tindak_lanjut:       form.tindak_lanjut       || null,
-        signature_penerima:  teknisiSignature,
+      let payload
+
+      if (isSigned) {
+        // Sudah ditandatangani → hanya ubah info barang, sisanya read-only
+        payload = {
+          nama_barang:   form.nama_barang   || null,
+          type_barang:   form.type_barang   || null,
+          serial_number: form.serial_number || null,
+        }
+      } else {
+        // Belum ditandatangani → teknisi isi semua + TTD
+        if (!teknisiSignature) {
+          setSaving(false)
+          setError('Tanda tangan teknisi wajib diisi sebelum simpan.')
+          return
+        }
+        if (!form.penerima_nama?.trim()) {
+          setSaving(false)
+          setError('Nama teknisi wajib diisi.')
+          return
+        }
+        payload = {
+          nama_barang:         form.nama_barang         || null,
+          type_barang:         form.type_barang         || null,
+          serial_number:       form.serial_number       || null,
+          penerima_nama:       form.penerima_nama       || null,
+          penerima_unit_kerja: form.penerima_unit_kerja || null,
+          tindak_lanjut:       form.tindak_lanjut       || null,
+          signature_penerima:  teknisiSignature,
+        }
+        if (!form.tanggal_ditindaklanjuti) payload.tanggal_ditindaklanjuti = todayDate()
+        if (!form.jam_ditindaklanjuti)     payload.jam_ditindaklanjuti     = nowTime()
       }
-      // Auto-set tanggal/jam ditindaklanjuti saat teknisi TTD & save
-      if (!form.tanggal_ditindaklanjuti) payload.tanggal_ditindaklanjuti = todayDate()
-      if (!form.jam_ditindaklanjuti)     payload.jam_ditindaklanjuti     = nowTime()
 
       await updateFormKomplain(form.id, payload)
       onSaved?.()
@@ -108,6 +125,18 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
 
               <div className="p-5 space-y-4 overflow-y-auto">
 
+                {/* Banner kalau sudah ditandatangani */}
+                {isSigned && (
+                  <div className="rounded-lg p-3 text-xs flex items-start gap-2"
+                    style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1E3A8A' }}>
+                    <Lock size={14} className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Sudah ditandatangani teknisi.</strong> Hanya <strong>Nama Barang, Type, & Serial Number</strong>
+                      {' '}yang bisa diubah untuk koreksi. Tindak lanjut & tanda tangan terkunci.
+                    </div>
+                  </div>
+                )}
+
                 {/* Read-only info dari user */}
                 <div className="rounded-lg p-3 text-xs" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
                   <p className="font-bold m-0 mb-2 uppercase tracking-wider" style={{ color: '#92400E' }}>
@@ -147,45 +176,71 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
 
                 {/* Penerima */}
                 <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Penerima Laporan (Teknisi)</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    Penerima Laporan (Teknisi)
+                    {isSigned && <Lock size={11} className="text-slate-400" />}
+                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">Nama <span className="text-rose-500">*</span></label>
+                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                        Nama {!isSigned && <span className="text-rose-500">*</span>}
+                      </label>
                       <input value={form.penerima_nama || ''} onChange={update('penerima_nama')}
-                        placeholder="Nama teknisi" className={input} />
+                        placeholder="Nama teknisi"
+                        readOnly={isSigned} disabled={isSigned}
+                        className={`${input} ${isSigned ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''}`} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-500 mb-1">Unit Kerja</label>
                       <input value={form.penerima_unit_kerja || ''} onChange={update('penerima_unit_kerja')}
-                        placeholder="Seat Management" className={input} />
+                        placeholder="Seat Management"
+                        readOnly={isSigned} disabled={isSigned}
+                        className={`${input} ${isSigned ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''}`} />
                     </div>
                   </div>
                 </div>
 
                 {/* Tindak Lanjut */}
                 <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tindak Lanjut / Jawaban</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    Tindak Lanjut / Jawaban
+                    {isSigned && <Lock size={11} className="text-slate-400" />}
+                  </p>
                   <textarea rows={5} value={form.tindak_lanjut || ''} onChange={update('tindak_lanjut')}
                     placeholder="Jelaskan tindakan yang sudah dilakukan untuk menangani komplain user..."
-                    className={`${input} resize-none`} />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    💡 Waktu ditindaklanjuti (tanggal + jam) akan otomatis ke-set ke sekarang saat Save.
-                  </p>
+                    readOnly={isSigned} disabled={isSigned}
+                    className={`${input} resize-none ${isSigned ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''}`} />
+                  {!isSigned && (
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      💡 Waktu ditindaklanjuti (tanggal + jam) akan otomatis ke-set ke sekarang saat Save.
+                    </p>
+                  )}
                 </div>
 
-                {/* Tanda Tangan Teknisi (manual draw) */}
+                {/* Tanda Tangan Teknisi */}
                 <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Tanda Tangan Teknisi <span className="text-rose-500">*</span>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    Tanda Tangan Teknisi
+                    {isSigned
+                      ? <Lock size={11} className="text-slate-400" />
+                      : <span className="text-rose-500">*</span>}
                   </p>
-                  <SignaturePad
-                    label=""
-                    value={teknisiSignature}
-                    onChange={setTeknisiSignature}
-                  />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    💡 Goreskan tanda tangan kamu sendiri. Setelah save, waktu ditindaklanjuti otomatis ke-set.
-                  </p>
+                  {isSigned ? (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex items-center justify-center" style={{ minHeight: 80 }}>
+                      <img src={fk.signature_penerima} alt="TTD Teknisi" style={{ maxHeight: 70, maxWidth: '100%', objectFit: 'contain' }} />
+                    </div>
+                  ) : (
+                    <SignaturePad
+                      label=""
+                      value={teknisiSignature}
+                      onChange={setTeknisiSignature}
+                    />
+                  )}
+                  {!isSigned && (
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      💡 Goreskan tanda tangan kamu sendiri. Setelah save, waktu ditindaklanjuti otomatis ke-set.
+                    </p>
+                  )}
                 </div>
 
                 {error && (
@@ -204,7 +259,7 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer border-0 transition-colors disabled:opacity-60"
                   style={{ backgroundColor: saving ? '#93C5FD' : '#2563EB' }}>
                   <Save size={14} strokeWidth={2.5} />
-                  {saving ? 'Menyimpan...' : 'Simpan & Tandatangani'}
+                  {saving ? 'Menyimpan...' : isSigned ? 'Simpan Koreksi Barang' : 'Simpan & Tandatangani'}
                 </button>
               </div>
             </motion.div>
