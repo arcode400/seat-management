@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, Wrench } from 'lucide-react'
 import { updateFormKomplain } from '../services/formKomplainService'
-import { getAppConfig } from '../services/appConfigService'
+import { useAuth } from '../context/AuthContext'
+import SignaturePad from './SignaturePad'
 
 function nowTime() {
   const d = new Date()
@@ -14,26 +15,21 @@ function todayDate() {
 }
 
 export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
+  const { displayName } = useAuth()
   const [form, setForm] = useState(fk || {})
-  const [defaultItSig, setDefaultItSig]   = useState('')
-  const [defaultItNama, setDefaultItNama] = useState('')
-  const [defaultItUnit, setDefaultItUnit] = useState('')
+  const [teknisiSignature, setTeknisiSignature] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
   useEffect(() => {
     setForm(fk || {})
+    setTeknisiSignature(fk?.signature_penerima || null)
     setError(null)
-    async function loadCfg() {
-      try {
-        const cfg = await getAppConfig()
-        setDefaultItSig(cfg.default_pihak_it_signature || '')
-        setDefaultItNama(cfg.default_pihak_it_nama || '')
-        setDefaultItUnit(cfg.default_pihak_it_jabatan || '')
-      } catch {}
+    // Pre-fill penerima_nama dgn nama teknisi yang lagi login (kalau masih kosong)
+    if (open && fk && !fk.penerima_nama && displayName) {
+      setForm(f => ({ ...f, penerima_nama: displayName }))
     }
-    if (open) loadCfg()
-  }, [fk, open])
+  }, [fk, open, displayName])
 
   function update(k) {
     return (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -41,6 +37,14 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
 
   async function handleSave() {
     if (!form?.id) return
+    if (!teknisiSignature) {
+      setError('Tanda tangan teknisi wajib diisi sebelum simpan.')
+      return
+    }
+    if (!form.penerima_nama?.trim()) {
+      setError('Nama teknisi wajib diisi.')
+      return
+    }
     setSaving(true); setError(null)
     try {
       const payload = {
@@ -50,21 +54,11 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
         penerima_nama:       form.penerima_nama       || null,
         penerima_unit_kerja: form.penerima_unit_kerja || null,
         tindak_lanjut:       form.tindak_lanjut       || null,
+        signature_penerima:  teknisiSignature,
       }
-      // Auto-set tanggal/jam ditindaklanjuti kalau tindak_lanjut diisi & belum di-set
-      if (payload.tindak_lanjut && !form.tanggal_ditindaklanjuti) {
-        payload.tanggal_ditindaklanjuti = todayDate()
-      }
-      if (payload.tindak_lanjut && !form.jam_ditindaklanjuti) {
-        payload.jam_ditindaklanjuti = nowTime()
-      }
-      // Embed default TTD IT sebagai signature_penerima
-      if (defaultItSig && !form.signature_penerima) {
-        payload.signature_penerima = defaultItSig
-      }
-      // Auto-fill penerima dari default kalau masih kosong
-      if (!payload.penerima_nama && defaultItNama) payload.penerima_nama = defaultItNama
-      if (!payload.penerima_unit_kerja && defaultItUnit) payload.penerima_unit_kerja = defaultItUnit
+      // Auto-set tanggal/jam ditindaklanjuti saat teknisi TTD & save
+      if (!form.tanggal_ditindaklanjuti) payload.tanggal_ditindaklanjuti = todayDate()
+      if (!form.jam_ditindaklanjuti)     payload.jam_ditindaklanjuti     = nowTime()
 
       await updateFormKomplain(form.id, payload)
       onSaved?.()
@@ -156,20 +150,14 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Penerima Laporan (Teknisi)</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">Nama</label>
+                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">Nama <span className="text-rose-500">*</span></label>
                       <input value={form.penerima_nama || ''} onChange={update('penerima_nama')}
-                        placeholder={defaultItNama || 'Nama teknisi'} className={input} />
-                      {defaultItNama && !form.penerima_nama && (
-                        <p className="text-[10px] text-slate-400 mt-1">Akan auto-isi: <strong>{defaultItNama}</strong></p>
-                      )}
+                        placeholder="Nama teknisi" className={input} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-500 mb-1">Unit Kerja</label>
                       <input value={form.penerima_unit_kerja || ''} onChange={update('penerima_unit_kerja')}
-                        placeholder={defaultItUnit || 'Unit kerja'} className={input} />
-                      {defaultItUnit && !form.penerima_unit_kerja && (
-                        <p className="text-[10px] text-slate-400 mt-1">Akan auto-isi: <strong>{defaultItUnit}</strong></p>
-                      )}
+                        placeholder="Mis. IT Services & Support" className={input} />
                     </div>
                   </div>
                 </div>
@@ -185,13 +173,18 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
                   </p>
                 </div>
 
-                {/* Default TTD info */}
-                <div className="rounded-lg p-3 text-xs" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-                  <p className="m-0 text-blue-900">
-                    <strong>Tanda Tangan Teknisi:</strong>{' '}
-                    {defaultItSig
-                      ? 'akan otomatis pakai TTD default PIC IT dari Settings.'
-                      : <span className="text-amber-700">⚠ TTD default belum di-set. Upload di Settings → PIC IT.</span>}
+                {/* Tanda Tangan Teknisi (manual draw) */}
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Tanda Tangan Teknisi <span className="text-rose-500">*</span>
+                  </p>
+                  <SignaturePad
+                    label=""
+                    value={teknisiSignature}
+                    onChange={setTeknisiSignature}
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    💡 Goreskan tanda tangan kamu sendiri. Setelah save, waktu ditindaklanjuti otomatis ke-set.
                   </p>
                 </div>
 
