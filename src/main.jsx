@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage.jsx'
 import PublicBAPPage from './pages/PublicBAPPage.jsx'
 import PublicBASTSignPage from './pages/PublicBASTSignPage.jsx'
 import PublicBAPSignPage from './pages/PublicBAPSignPage.jsx'
+import PublicKomplainSignPage from './pages/PublicKomplainSignPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/bap/:id" element={<PublicBAPPage />} />
           <Route path="/bast-sign/:id" element={<PublicBASTSignPage />} />
           <Route path="/bap-sign/:id" element={<PublicBAPSignPage />} />
+          <Route path="/komplain-sign/:id" element={<PublicKomplainSignPage />} />
           <Route
             path="/dashboard"
             element={
