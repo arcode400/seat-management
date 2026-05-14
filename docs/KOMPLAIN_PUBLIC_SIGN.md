@@ -8,8 +8,9 @@ User isi form komplain & tanda tangan sendiri via link publik
 ```sql
 -- ─── 1. Tambah kolom signature di tabel form_komplain ──────────────────────
 ALTER TABLE public.form_komplain
-  ADD COLUMN IF NOT EXISTS signature_pelapor text,
-  ADD COLUMN IF NOT EXISTS signed_at         timestamptz;
+  ADD COLUMN IF NOT EXISTS signature_pelapor  text,
+  ADD COLUMN IF NOT EXISTS signature_penerima text,
+  ADD COLUMN IF NOT EXISTS signed_at          timestamptz;
 
 -- ─── 2. RPC: get form komplain via id (untuk halaman publik) ────────────────
 CREATE OR REPLACE FUNCTION public.get_komplain_public(p_id uuid)
@@ -55,7 +56,10 @@ BEGIN
       masalah_komplain     = p_masalah_komplain,
       kronologi            = p_kronologi,
       signature_pelapor    = p_signature,
-      signed_at            = NOW()
+      signed_at            = NOW(),
+      -- Auto-set waktu pelaporan ke saat user submit (kalau belum di-set)
+      tanggal_pelaporan    = COALESCE(tanggal_pelaporan, CURRENT_DATE),
+      jam_pelaporan        = COALESCE(jam_pelaporan,     TO_CHAR(NOW() AT TIME ZONE 'Asia/Jakarta', 'HH24:MI'))
   WHERE id = p_id;
 
   IF NOT FOUND THEN

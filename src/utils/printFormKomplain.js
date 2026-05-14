@@ -141,15 +141,20 @@ export function printFormKomplain(fk) {
   <!-- Signatures -->
   <div class="sig-row">
     <div class="sig-blk">
-      <p class="sig-title">Dibuat Oleh,</p>
+      <p class="sig-title" style="margin-bottom:4px">Dibuat Oleh,</p>
+      <div style="height:60px;display:flex;align-items:center">
+        ${fk.signature_pelapor ? `<img src="${fk.signature_pelapor}" alt="ttd pelapor" style="max-height:60px;max-width:180px;object-fit:contain"/>` : ''}
+      </div>
       <div class="sig-line"></div>
-      <p class="sig-role">(Pelapor)</p>
+      <p class="sig-role">${fk.pelapor_nama ? `( ${fk.pelapor_nama} )` : '(Pelapor)'}</p>
     </div>
     <div class="sig-blk" style="text-align:right">
-      <p class="sig-title">Diterima Oleh,</p>
+      <p class="sig-title" style="margin-bottom:4px">Diterima Oleh,</p>
+      <div style="height:60px;display:flex;align-items:center;justify-content:flex-end">
+        ${fk.signature_penerima ? `<img src="${fk.signature_penerima}" alt="ttd penerima" style="max-height:60px;max-width:180px;object-fit:contain"/>` : ''}
+      </div>
       <div class="sig-line" style="margin-left:auto"></div>
-      <p class="sig-role">(Teknisi Komputer)</p>
-      <p class="sig-dash">-</p>
+      <p class="sig-role">${fk.penerima_nama ? `( ${fk.penerima_nama} )` : '(Teknisi Komputer)'}</p>
     </div>
   </div>
 

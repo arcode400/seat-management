@@ -19,6 +19,17 @@ export async function createFormKomplain(payload) {
   return data
 }
 
+export async function updateFormKomplain(id, fields) {
+  const { data, error } = await supabase
+    .from('form_komplain')
+    .update(fields)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
 export async function deleteFormKomplain(id) {
   const { error } = await supabase
     .from('form_komplain')

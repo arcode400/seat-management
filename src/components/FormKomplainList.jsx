@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
-import { FileText, Printer, Trash2, MessageSquareWarning, FileDown } from 'lucide-react'
+import { FileText, Printer, Trash2, MessageSquareWarning, FileDown, Edit3 } from 'lucide-react'
 import { getAllFormKomplain, deleteFormKomplain } from '../services/formKomplainService'
 import { printFormKomplain } from '../utils/printFormKomplain'
 import { printReport } from '../utils/printReport'
 import { useAuth } from '../context/AuthContext'
+import EditFormKomplainModal from './EditFormKomplainModal'
 
 export default function FormKomplainList({ refreshTrigger }) {
-  const { isSuperAdmin } = useAuth()
+  const { isSuperAdmin, isAdmin, isStaff } = useAuth()
+  const [editing, setEditing] = useState(null)
+  const canEdit = isAdmin || isStaff
   const [list, setList]       = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
@@ -135,6 +138,15 @@ export default function FormKomplainList({ refreshTrigger }) {
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}>
                     <Printer size={12} /> Print
                   </button>
+                  {canEdit && (
+                    <button onClick={() => setEditing(fk)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                      style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FDE68A'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FEF3C7'}>
+                      <Edit3 size={12} /> Edit
+                    </button>
+                  )}
                   {isSuperAdmin && (
                     <button onClick={() => handleDelete(fk.id, fk.pelapor_nama)}
                       className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
@@ -150,6 +162,16 @@ export default function FormKomplainList({ refreshTrigger }) {
           ))}
         </tbody>
       </table>
+
+      <EditFormKomplainModal
+        fk={editing}
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        onSaved={async () => {
+          // Re-fetch list setelah save
+          try { setList(await getAllFormKomplain()) } catch {}
+        }}
+      />
     </div>
   )
 }
