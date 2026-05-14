@@ -130,7 +130,7 @@ export default function PublicKomplainSignPage() {
             </Field>
             <Field label="Lokasi Kerja">
               <input value={form.pelapor_lokasi_kerja} onChange={update('pelapor_lokasi_kerja')}
-                placeholder="Mis. Lantai 3" className={input} />
+                placeholder="Direktorat Strategi (IT)" className={input} />
             </Field>
           </div>
 
