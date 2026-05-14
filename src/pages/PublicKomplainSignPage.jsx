@@ -16,6 +16,7 @@ export default function PublicKomplainSignPage() {
     pelapor_nama: '',
     pelapor_unit_kerja: '',
     pelapor_lokasi_kerja: '',
+    user_jabatan: '',
     masalah_komplain: '',
     kronologi: '',
   })
@@ -36,6 +37,7 @@ export default function PublicKomplainSignPage() {
           pelapor_nama:         data.pelapor_nama         || '',
           pelapor_unit_kerja:   data.pelapor_unit_kerja   || '',
           pelapor_lokasi_kerja: data.pelapor_lokasi_kerja || '',
+          user_jabatan:         data.user_jabatan         || '',
           masalah_komplain:     data.masalah_komplain     || '',
           kronologi:            data.kronologi            || '',
         }))
@@ -63,6 +65,7 @@ export default function PublicKomplainSignPage() {
         p_pelapor_nama:         form.pelapor_nama.trim(),
         p_pelapor_unit_kerja:   form.pelapor_unit_kerja.trim(),
         p_pelapor_lokasi_kerja: form.pelapor_lokasi_kerja.trim(),
+        p_user_jabatan:         form.user_jabatan.trim(),
         p_masalah_komplain:     form.masalah_komplain.trim(),
         p_kronologi:            form.kronologi.trim(),
         p_signature:            signature,
@@ -128,11 +131,16 @@ export default function PublicKomplainSignPage() {
               <input value={form.pelapor_unit_kerja} onChange={update('pelapor_unit_kerja')}
                 placeholder="Mis. Finance" className={input} />
             </Field>
-            <Field label="Lokasi Kerja">
-              <input value={form.pelapor_lokasi_kerja} onChange={update('pelapor_lokasi_kerja')}
-                placeholder="Direktorat Strategi (IT)" className={input} />
+            <Field label="Jabatan">
+              <input value={form.user_jabatan} onChange={update('user_jabatan')}
+                placeholder="Mis. Staff Finance" className={input} />
             </Field>
           </div>
+
+          <Field label="Lokasi Kerja">
+            <input value={form.pelapor_lokasi_kerja} onChange={update('pelapor_lokasi_kerja')}
+              placeholder="Direktorat Strategi (IT)" className={input} />
+          </Field>
 
           <Field label="Masalah / Komplain" required>
             <textarea rows={3} value={form.masalah_komplain} onChange={update('masalah_komplain')}

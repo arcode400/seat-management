@@ -26,12 +26,13 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_komplain_public(uuid) TO anon, authenticated;
 
--- ─── 3. RPC: submit signature + isi info pelapor dari user ──────────────────
+-- ─── 3. RPC: submit signature + isi info pelapor & user dari user ──────────
 CREATE OR REPLACE FUNCTION public.submit_komplain_signature(
   p_id                   uuid,
   p_pelapor_nama         text,
   p_pelapor_unit_kerja   text,
   p_pelapor_lokasi_kerja text,
+  p_user_jabatan         text,
   p_masalah_komplain     text,
   p_kronologi            text,
   p_signature            text
@@ -57,9 +58,13 @@ BEGIN
       kronologi            = p_kronologi,
       signature_pelapor    = p_signature,
       signed_at            = NOW(),
-      -- Auto-set waktu pelaporan ke saat user submit (kalau belum di-set)
+      -- Auto-set waktu pelaporan
       tanggal_pelaporan    = COALESCE(tanggal_pelaporan, CURRENT_DATE),
-      jam_pelaporan        = COALESCE(jam_pelaporan,     TO_CHAR(NOW() AT TIME ZONE 'Asia/Jakarta', 'HH24:MI'))
+      jam_pelaporan        = COALESCE(jam_pelaporan,     TO_CHAR(NOW() AT TIME ZONE 'Asia/Jakarta', 'HH24:MI')),
+      -- Auto-copy pelapor → user (asumsi pelapor = pemakai perangkat)
+      user_nama            = p_pelapor_nama,
+      user_jabatan         = p_user_jabatan,
+      user_unit            = p_pelapor_unit_kerja
   WHERE id = p_id;
 
   IF NOT FOUND THEN
@@ -68,7 +73,10 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.submit_komplain_signature(uuid, text, text, text, text, text, text) TO anon, authenticated;
+-- Drop signature lama (param berbeda) — wajib karena Postgres treat overload sebagai function beda
+DROP FUNCTION IF EXISTS public.submit_komplain_signature(uuid, text, text, text, text, text, text);
+
+GRANT EXECUTE ON FUNCTION public.submit_komplain_signature(uuid, text, text, text, text, text, text, text) TO anon, authenticated;
 ```
 
 ## Flow
