@@ -157,7 +157,7 @@ export default function EditFormKomplainModal({ fk, open, onClose, onSaved }) {
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-500 mb-1">Unit Kerja</label>
                       <input value={form.penerima_unit_kerja || ''} onChange={update('penerima_unit_kerja')}
-                        placeholder="Mis. IT Services & Support" className={input} />
+                        placeholder="Seat Management" className={input} />
                     </div>
                   </div>
                 </div>
