@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import WelcomeSection from './components/WelcomeSection'
+import MonthlyReminder from './components/MonthlyReminder'
 import DashboardCards from './components/DashboardCards'
 import DashboardCharts from './components/DashboardCharts'
 import LocationAlerts from './components/LocationAlerts'
@@ -131,6 +132,7 @@ export default function App() {
                   Mode Teknisi — bisa buat BAP pengembalian, input issues & komplain, lihat aset
                 </div>
               )}
+              <MonthlyReminder />
               <LocationAlerts />
               <DashboardCards />
               <DashboardCharts />
