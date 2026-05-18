@@ -430,8 +430,8 @@ export default function QuickOpnamePage() {
               </button>
             </div>
             <ul className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-              {history.map((h, i) => (
-                <li key={`${h.id}-${h.time}`} className="px-4 py-2.5 flex items-center gap-3 group">
+              {history.map((h) => (
+                <li key={`${h.id}-${h.time}`} className="px-4 py-2.5 flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     <CheckCircle2 size={14} className="text-emerald-600" strokeWidth={2.25} />
                   </div>
@@ -449,13 +449,6 @@ export default function QuickOpnamePage() {
                       <Clock size={9} /> {fmtTime(h.time)}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setHistory(arr => arr.filter((_, idx) => idx !== i))}
-                    title="Hapus dari list (gak hapus data di DB)"
-                    className="ml-1 p-1.5 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors border-0 bg-transparent cursor-pointer flex-shrink-0"
-                  >
-                    <X size={14} strokeWidth={2.25} />
-                  </button>
                 </li>
               ))}
             </ul>
