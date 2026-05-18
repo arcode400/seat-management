@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, MapPin, CheckCircle2, AlertCircle, ScanLine, X, History, Clock } from 'lucide-react'
+import { Package, MapPin, CheckCircle2, AlertCircle, ScanLine, X, History, Clock, PlusCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { findLaptopBySN, tagLaptopOpname } from '../services/laptopService'
+import { findLaptopBySN, tagLaptopOpname, addLaptop } from '../services/laptopService'
 
 const LOCATIONS = [
   'Gudang Graha AP1',
@@ -31,7 +31,9 @@ export default function QuickOpnamePage() {
   const [customLoc, setCustomLoc] = useState('')
   const [sn, setSn] = useState('')
   const [busy, setBusy] = useState(false)
-  const [lastResult, setLastResult] = useState(null) // { success, laptop, message, time }
+  const [lastResult, setLastResult] = useState(null) // { success, laptop, message, time, notFoundSn? }
+  const [registerMode, setRegisterMode] = useState(null) // { sn, brand, hostname }
+  const [registering, setRegistering] = useState(false)
   const [history, setHistory] = useState(() => {
     // Load history dari localStorage saat first mount
     try {
@@ -77,6 +79,7 @@ export default function QuickOpnamePage() {
       if (!laptop) {
         setLastResult({
           success: false,
+          notFoundSn: cleaned,
           message: `SN "${cleaned}" tidak ditemukan di database`,
           time: Date.now(),
         })
@@ -111,6 +114,47 @@ export default function QuickOpnamePage() {
       setLastResult({ success: false, message: err.message, time: Date.now() })
     } finally {
       setBusy(false)
+    }
+  }
+
+  function openRegister(sn) {
+    setRegisterMode({ sn: sn.toUpperCase(), brand: '', hostname: '' })
+    setLastResult(null)
+  }
+
+  async function submitRegister(e) {
+    e?.preventDefault()
+    if (!registerMode) return
+    if (!registerMode.sn.trim() || !registerMode.brand.trim()) return
+    if (!effectiveLocation) {
+      alert('Pilih lokasi dulu')
+      return
+    }
+    setRegistering(true)
+    try {
+      const created = await addLaptop({
+        serial_number: registerMode.sn.trim().toUpperCase(),
+        brand_type:    registerMode.brand.trim().toUpperCase(),
+        hostname:      registerMode.hostname.trim() || null,
+        status:        'available',
+        storage_location: effectiveLocation,
+        last_opname_at:   new Date().toISOString(),
+        last_opname_by:   user?.email ?? null,
+      })
+      setLastResult({
+        success: true,
+        laptop: created,
+        message: `✓ Registered: ${created.brand_type} (SN ${created.serial_number}) → ${effectiveLocation}`,
+        time: Date.now(),
+      })
+      setHistory(h => [{ ...created, time: Date.now(), location: effectiveLocation }, ...h].slice(0, MAX_HISTORY))
+      setRegisterMode(null)
+      setSn('')
+      setTimeout(() => inputRef.current?.focus(), 100)
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setRegistering(false)
     }
   }
 
@@ -213,6 +257,15 @@ export default function QuickOpnamePage() {
                       {lastResult.laptop.brand_type || ''} · SN <span className="font-mono">{lastResult.laptop.serial_number || '—'}</span>
                     </p>
                   )}
+                  {lastResult.notFoundSn && (
+                    <button
+                      onClick={() => openRegister(lastResult.notFoundSn)}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer border-0"
+                    >
+                      <PlusCircle size={12} strokeWidth={2.5} />
+                      Register sebagai Laptop Baru
+                    </button>
+                  )}
                 </div>
                 <button onClick={() => setLastResult(null)}
                   className="text-slate-400 hover:text-slate-700 transition-colors border-0 bg-transparent cursor-pointer p-1">
@@ -220,6 +273,89 @@ export default function QuickOpnamePage() {
                 </button>
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mini form register laptop baru */}
+        <AnimatePresence>
+          {registerMode && (
+            <motion.form
+              onSubmit={submitRegister}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-xl border-2 border-blue-300 shadow-sm p-4 space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <PlusCircle size={16} className="text-blue-600" strokeWidth={2.25} />
+                <p className="text-sm font-bold text-slate-800 m-0">Register Laptop Baru</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  Serial Number
+                </label>
+                <input
+                  type="text"
+                  value={registerMode.sn}
+                  onChange={e => setRegisterMode(m => ({ ...m, sn: e.target.value }))}
+                  className="w-full px-3 py-2.5 text-sm font-mono uppercase border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  Brand / Type <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={registerMode.brand}
+                  onChange={e => setRegisterMode(m => ({ ...m, brand: e.target.value }))}
+                  placeholder="Mis. Lenovo ThinkPad E14, Dell Optiplex 7020"
+                  autoFocus
+                  className="w-full px-3 py-2.5 text-sm uppercase border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  Hostname (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={registerMode.hostname}
+                  onChange={e => setRegisterMode(m => ({ ...m, hostname: e.target.value }))}
+                  placeholder="Bisa diisi nanti pas agent install"
+                  className="w-full px-3 py-2.5 text-sm font-mono uppercase border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="rounded-lg p-2.5 text-xs flex items-center gap-2"
+                style={{ backgroundColor: '#EFF6FF', color: '#1E3A8A' }}>
+                <MapPin size={12} className="flex-shrink-0" />
+                <span>Akan ke-register di lokasi: <strong>{effectiveLocation || '(pilih lokasi)'}</strong></span>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRegisterMode(null)}
+                  disabled={registering}
+                  className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer border-0 disabled:opacity-60"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={registering || !registerMode.brand.trim()}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer border-0 disabled:opacity-60"
+                >
+                  <CheckCircle2 size={14} strokeWidth={2.5} />
+                  {registering ? 'Menyimpan...' : 'Register & Tandai'}
+                </button>
+              </div>
+            </motion.form>
           )}
         </AnimatePresence>
 
