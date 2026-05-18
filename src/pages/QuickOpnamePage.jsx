@@ -12,7 +12,6 @@ const LOCATIONS = [
   'Gedung 628 ERP',
   'Gedung ACD IALC',
   'Kantor Cabang Jakarta',
-  'Kantor Gapura',
   'CGK',
   'Lainnya',
 ]
