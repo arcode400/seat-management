@@ -23,6 +23,15 @@ function fmtTime(ts) {
   } catch { return '' }
 }
 
+function fmtDateTime(ts) {
+  try {
+    return new Date(ts).toLocaleString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+  } catch { return '' }
+}
+
 export default function QuickOpnamePage() {
   const { user } = useAuth()
   const [location, setLocation] = useState(() => {
@@ -63,6 +72,19 @@ export default function QuickOpnamePage() {
 
   const effectiveLocation = location === 'Lainnya' ? customLoc.trim() : location
 
+  // Inti opname (tag laptop) — terpisah biar bisa dipanggil dari handleSubmit atau override
+  async function doTagOpname(laptop) {
+    await tagLaptopOpname(laptop.id, effectiveLocation, user?.email)
+    setLastResult({
+      success: true,
+      laptop,
+      message: `✓ ${laptop.hostname || laptop.serial_number} → ${effectiveLocation}`,
+      time: Date.now(),
+    })
+    setHistory(h => [{ ...laptop, time: Date.now(), location: effectiveLocation }, ...h].slice(0, MAX_HISTORY))
+    setSn('')
+  }
+
   async function handleSubmit(e) {
     e?.preventDefault()
     if (busy) return
@@ -87,29 +109,37 @@ export default function QuickOpnamePage() {
         return
       }
 
-      // Cek apakah barusan di-opname (anti-double-scan, < 30 detik)
-      const alreadyInHistory = history.find(h => h.id === laptop.id)
-      if (alreadyInHistory && Date.now() - alreadyInHistory.time < 30000) {
+      // Cek apakah sudah pernah di-opname (dari DB, bukan cuma UI history)
+      if (laptop.last_opname_at) {
+        const sameLocation = (laptop.storage_location || '') === effectiveLocation
         setLastResult({
           success: false,
+          alreadyOpnamed: true,
+          sameLocation,
           laptop,
-          message: 'Sudah baru saja di-opname (skip duplicate)',
+          message: sameLocation
+            ? `Sudah di-opname di ${laptop.storage_location} pada ${fmtDateTime(laptop.last_opname_at)}`
+            : `Pernah di-opname di "${laptop.storage_location}" (${fmtDateTime(laptop.last_opname_at)}). Mau pindahkan ke "${effectiveLocation}"?`,
           time: Date.now(),
         })
         setSn('')
         return
       }
 
-      await tagLaptopOpname(laptop.id, effectiveLocation, user?.email)
-      const result = {
-        success: true,
-        laptop,
-        message: `✓ ${laptop.hostname || laptop.serial_number} → ${effectiveLocation}`,
-        time: Date.now(),
-      }
-      setLastResult(result)
-      setHistory(h => [{ ...laptop, time: Date.now(), location: effectiveLocation }, ...h].slice(0, MAX_HISTORY))
-      setSn('')
+      await doTagOpname(laptop)
+    } catch (err) {
+      setLastResult({ success: false, message: err.message, time: Date.now() })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Override: paksa tag opname (dipanggil pas user klik "Update Lokasi" untuk yang sudah pernah di-opname)
+  async function handleOverride() {
+    if (!lastResult?.laptop) return
+    setBusy(true)
+    try {
+      await doTagOpname(lastResult.laptop)
     } catch (err) {
       setLastResult({ success: false, message: err.message, time: Date.now() })
     } finally {
@@ -241,19 +271,32 @@ export default function QuickOpnamePage() {
               className={`rounded-xl border-2 p-3 ${
                 lastResult.success
                   ? 'bg-emerald-50 border-emerald-200'
+                  : lastResult.alreadyOpnamed
+                  ? 'bg-amber-50 border-amber-200'
                   : 'bg-rose-50 border-rose-200'
               }`}
             >
               <div className="flex items-start gap-2">
                 {lastResult.success
                   ? <CheckCircle2 size={18} className="text-emerald-600 flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+                  : lastResult.alreadyOpnamed
+                  ? <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" strokeWidth={2.25} />
                   : <AlertCircle size={18} className="text-rose-600 flex-shrink-0 mt-0.5" strokeWidth={2.25} />}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-bold m-0 ${lastResult.success ? 'text-emerald-900' : 'text-rose-900'}`}>
-                    {lastResult.message}
+                  <p className={`text-sm font-bold m-0 ${
+                    lastResult.success ? 'text-emerald-900'
+                    : lastResult.alreadyOpnamed ? 'text-amber-900'
+                    : 'text-rose-900'
+                  }`}>
+                    {lastResult.alreadyOpnamed ? '⚠ Sudah pernah di-opname' : lastResult.message}
                   </p>
+                  {lastResult.alreadyOpnamed && (
+                    <p className="text-xs text-slate-700 m-0 mt-1 leading-relaxed">
+                      {lastResult.message}
+                    </p>
+                  )}
                   {lastResult.laptop && (
-                    <p className="text-xs text-slate-600 m-0 mt-0.5 truncate">
+                    <p className="text-xs text-slate-600 m-0 mt-1 truncate">
                       {lastResult.laptop.brand_type || ''} · SN <span className="font-mono">{lastResult.laptop.serial_number || '—'}</span>
                     </p>
                   )}
@@ -264,6 +307,16 @@ export default function QuickOpnamePage() {
                     >
                       <PlusCircle size={12} strokeWidth={2.5} />
                       Register sebagai Laptop Baru
+                    </button>
+                  )}
+                  {lastResult.alreadyOpnamed && !lastResult.sameLocation && (
+                    <button
+                      onClick={handleOverride}
+                      disabled={busy}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer border-0 disabled:opacity-60"
+                    >
+                      <CheckCircle2 size={12} strokeWidth={2.5} />
+                      Ya, pindahkan ke {effectiveLocation}
                     </button>
                   )}
                 </div>
