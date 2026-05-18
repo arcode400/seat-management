@@ -1,5 +1,37 @@
 import { supabase } from '../lib/supabase'
 
+// === Quick Opname helpers ===
+
+// Cari laptop berdasarkan SN (case-insensitive, partial trim)
+export async function findLaptopBySN(sn) {
+  const cleaned = (sn || '').trim()
+  if (!cleaned) return null
+  const { data, error } = await supabase
+    .from('laptops')
+    .select('*')
+    .ilike('serial_number', cleaned)
+    .limit(1)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+// Tandai laptop di lokasi tertentu (Quick Opname)
+export async function tagLaptopOpname(id, location, opnameBy) {
+  const { data, error } = await supabase
+    .from('laptops')
+    .update({
+      storage_location: location,
+      last_opname_at:   new Date().toISOString(),
+      last_opname_by:   opnameBy ?? 'unknown',
+    })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
 // Ambil semua data laptops
 export async function getAllLaptops() {
   const { data, error } = await supabase
