@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Package, MapPin, CheckCircle2, AlertCircle, ScanLine, X, History, Clock, PlusCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { findLaptopBySN, tagLaptopOpname, addLaptop } from '../services/laptopService'
+import { findLaptopBySN, tagLaptopOpname, addLaptop, getRecentOpname } from '../services/laptopService'
 
 const LOCATIONS = [
   'Gudang Graha AP1',
@@ -71,6 +71,37 @@ export default function QuickOpnamePage() {
       localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history.slice(0, MAX_HISTORY)))
     } catch {}
   }, [history])
+
+  // Saat first mount: sync dari DB (history yang dilakuin di device lain tetep kelihatan)
+  useEffect(() => {
+    let cancelled = false
+    async function sync() {
+      try {
+        const remote = await getRecentOpname(MAX_HISTORY)
+        if (cancelled) return
+        const mapped = remote.map(r => ({
+          ...r,
+          time: new Date(r.last_opname_at).getTime(),
+          location: r.storage_location,
+        }))
+        setHistory(local => {
+          const seen = new Set()
+          const merged = [...mapped, ...local].filter(h => {
+            if (!h.id || seen.has(h.id)) return false
+            seen.add(h.id)
+            return true
+          })
+          // Sort by time desc
+          merged.sort((a, b) => (b.time || 0) - (a.time || 0))
+          return merged.slice(0, MAX_HISTORY)
+        })
+      } catch (err) {
+        console.warn('[Opname] sync history dari DB gagal:', err.message)
+      }
+    }
+    sync()
+    return () => { cancelled = true }
+  }, [])
 
   // Auto-focus ke SN input setelah operasi selesai
   useEffect(() => {

@@ -16,6 +16,18 @@ export async function findLaptopBySN(sn) {
   return data
 }
 
+// Ambil laptop yang baru-baru di-opname (untuk populate history list di Quick Opname UI)
+export async function getRecentOpname(limit = 50) {
+  const { data, error } = await supabase
+    .from('laptops')
+    .select('id, hostname, serial_number, brand_type, storage_location, last_opname_at, last_opname_by')
+    .not('last_opname_at', 'is', null)
+    .order('last_opname_at', { ascending: false })
+    .limit(limit)
+  if (error) throw new Error(error.message)
+  return data
+}
+
 // Tandai laptop di lokasi tertentu (Quick Opname)
 // Catatan: kalau laptop saat ini berstatus 'available', auto-set jadi 'rusak'
 // (asumsi: laptop yang ada di gudang & di-opname = tidak aktif / cadangan)
