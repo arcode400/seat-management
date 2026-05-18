@@ -30,7 +30,7 @@ const COLLAPSE_KEY = 'seat-sidebar-collapsed'
 
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCollapseChange }) {
   const navigate = useNavigate()
-  const { signOut, isAdmin, isStaff, displayName, profile, user } = useAuth()
+  const { signOut, isAdmin, isStaff, isSuperAdmin, displayName, profile, user } = useAuth()
 
   // Persist collapse state across reloads
   const [collapsed, setCollapsed] = useState(() => {
@@ -46,10 +46,16 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
     navigate('/login', { replace: true })
   }
 
-  const STAFF_ONLY = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'FormKomplain', 'Opname']
+  const STAFF_ONLY = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'FormKomplain']
+  // Opname: hanya super_admin yang boleh akses
+  const SUPER_ADMIN_ONLY = ['Opname']
   const visibleNav = isStaff
     ? NAV_ITEMS.filter(i => STAFF_ONLY.includes(i.key))
-    : NAV_ITEMS.filter(i => i.key !== 'Settings' || isAdmin)
+    : NAV_ITEMS.filter(i => {
+        if (SUPER_ADMIN_ONLY.includes(i.key)) return isSuperAdmin
+        if (i.key === 'Settings') return isAdmin
+        return true
+      })
 
   const initials = (displayName || 'U').slice(0, 2).toUpperCase()
   const avatarUrl = profile?.avatar_url
