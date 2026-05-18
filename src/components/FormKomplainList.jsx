@@ -60,8 +60,8 @@ export default function FormKomplainList({ refreshTrigger }) {
     const styles = {
       waiting_user: { bg: '#F3F4F6', color: '#6B7280', label: 'Menunggu User',  dot: '#9CA3AF' },
       in_progress:  { bg: '#FEF3C7', color: '#92400E', label: 'Menunggu Tindak Lanjut', dot: '#F59E0B' },
-      solved:       { bg: '#DCFCE7', color: '#166534', label: 'Selesai',        dot: '#10B981' },
-      closed:       { bg: '#DBEAFE', color: '#1E40AF', label: 'Closed',         dot: '#2563EB' },
+      solved:       { bg: '#DBEAFE', color: '#1E40AF', label: 'On Progress',    dot: '#2563EB' },
+      closed:       { bg: '#DCFCE7', color: '#166534', label: 'Selesai',        dot: '#10B981' },
     }
     const s = styles[status] || styles.waiting_user
     return (
@@ -74,7 +74,7 @@ export default function FormKomplainList({ refreshTrigger }) {
   }
 
   async function handleClose(id, pelapor) {
-    if (!confirm(`Tandai komplain "${pelapor || 'tanpa nama'}" sebagai Closed?\n\nPastikan barang/sparepart sudah diterima & perangkat sudah OK. Setelah Closed, komplain ini gak akan masuk daftar perlu di-handle lagi.`)) return
+    if (!confirm(`Tandai komplain "${pelapor || 'tanpa nama'}" sebagai Selesai?\n\nPastikan barang/sparepart sudah diterima & perangkat sudah OK. Setelah Selesai, komplain ini gak akan masuk daftar perlu di-handle lagi.`)) return
     try {
       await closeFormKomplain(id, user?.email ?? 'system')
       setList(await getAllFormKomplain())
@@ -82,7 +82,7 @@ export default function FormKomplainList({ refreshTrigger }) {
   }
 
   async function handleReopen(id, pelapor) {
-    if (!confirm(`Buka kembali komplain "${pelapor || 'tanpa nama'}" (reopen)?\n\nStatus akan kembali ke "Selesai" supaya bisa di-edit ulang.`)) return
+    if (!confirm(`Buka kembali komplain "${pelapor || 'tanpa nama'}" (reopen)?\n\nStatus akan kembali ke "On Progress" supaya bisa di-edit ulang.`)) return
     try {
       await reopenFormKomplain(id)
       setList(await getAllFormKomplain())
@@ -144,9 +144,9 @@ export default function FormKomplainList({ refreshTrigger }) {
           {list.map((fk, i) => {
             const status = getStatus(fk)
             // Subtle background tint sesuai status
-            const tintBg = status === 'closed' ? '#EFF6FF'
-                         : status === 'solved' ? '#F0FDF4'
-                         : status === 'in_progress' ? '#FFFBEB'
+            const tintBg = status === 'closed' ? '#F0FDF4'     // hijau muda — Selesai
+                         : status === 'solved' ? '#EFF6FF'     // biru muda — On Progress
+                         : status === 'in_progress' ? '#FFFBEB' // amber muda — Menunggu Tindak Lanjut
                          : (i % 2 === 0 ? 'white' : '#FAFAFA')
             return (
             <tr key={fk.id}
@@ -206,12 +206,12 @@ export default function FormKomplainList({ refreshTrigger }) {
                   )}
                   {canClose && status === 'solved' && (
                     <button onClick={() => handleClose(fk.id, fk.pelapor_nama)}
-                      title="Tandai komplain sebagai Closed — sparepart datang / perangkat OK"
+                      title="Tandai komplain sebagai Selesai — sparepart datang / perangkat OK"
                       className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
-                      style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#BFDBFE'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#DBEAFE'}>
-                      <CheckCircle2 size={12} /> Close
+                      style={{ backgroundColor: '#DCFCE7', color: '#166534' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#BBF7D0'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#DCFCE7'}>
+                      <CheckCircle2 size={12} /> Selesai
                     </button>
                   )}
                   {canClose && status === 'closed' && (
