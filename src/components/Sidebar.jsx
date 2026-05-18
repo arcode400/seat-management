@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, ScrollText, BarChart2, Bell, Settings, LogOut,
   AlertTriangle, FileText, PackageX, MessageSquareWarning, Package, ClipboardCheck,
-  ChevronLeft, ChevronRight, Circle,
+  ChevronLeft, ChevronRight, Circle, ScanLine,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { key: 'Issues',       icon: AlertTriangle,       label: 'Issues' },
   { key: 'BAKhusus',     icon: PackageX,            label: 'BA Pengeluaran' },
   { key: 'FormKomplain', icon: MessageSquareWarning, label: 'Form Komplain' },
+  { key: 'Opname',       icon: ScanLine,            label: 'Quick Opname', route: '/opname' },
   { key: 'Users',        icon: Users,               label: 'Users' },
   { key: 'Logs',         icon: ScrollText,          label: 'Logs' },
   { key: 'Settings',     icon: Settings,            label: 'PIC IT' },
@@ -45,7 +46,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
     navigate('/login', { replace: true })
   }
 
-  const STAFF_ONLY = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'FormKomplain']
+  const STAFF_ONLY = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'FormKomplain', 'Opname']
   const visibleNav = isStaff
     ? NAV_ITEMS.filter(i => STAFF_ONLY.includes(i.key))
     : NAV_ITEMS.filter(i => i.key !== 'Settings' || isAdmin)
@@ -114,12 +115,18 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
               Menu
             </p>
           )}
-          {visibleNav.map(({ key, icon: Icon, label }) => {
-            const active = activeTab === key
+          {visibleNav.map(({ key, icon: Icon, label, route }) => {
+            const active = route
+              ? (typeof window !== 'undefined' && window.location.pathname === route)
+              : activeTab === key
             return (
               <button
                 key={key}
-                onClick={() => { onTabChange(key); onClose() }}
+                onClick={() => {
+                  if (route) navigate(route)
+                  else onTabChange(key)
+                  onClose()
+                }}
                 title={collapsed ? label : undefined}
                 className={`
                   group relative w-full flex items-center gap-3 rounded-lg text-sm font-medium
