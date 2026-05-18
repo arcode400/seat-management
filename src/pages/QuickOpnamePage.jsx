@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, MapPin, CheckCircle2, AlertCircle, ScanLine, X, History, Clock, PlusCircle } from 'lucide-react'
+import { Package, MapPin, CheckCircle2, AlertCircle, ScanLine, X, History, Clock, PlusCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { findLaptopBySN, tagLaptopOpname, addLaptop, getRecentOpname } from '../services/laptopService'
 
@@ -17,6 +17,7 @@ const STORAGE_KEY_LOCATION = 'opname-default-location'
 const STORAGE_KEY_HISTORY  = 'opname-recent-history'
 const STORAGE_KEY_REGSTATUS = 'opname-register-status'
 const MAX_HISTORY = 1000
+const PAGE_SIZE = 20
 
 const STATUS_OPTIONS = [
   { value: 'rusak',       label: 'Tidak Aktif (warisan / cadangan)' },
@@ -50,6 +51,9 @@ export default function QuickOpnamePage() {
   const [lastResult, setLastResult] = useState(null) // { success, laptop, message, time, notFoundSn? }
   const [registerMode, setRegisterMode] = useState(null) // { sn, brand, hostname }
   const [registering, setRegistering] = useState(false)
+  const [historySearch, setHistorySearch] = useState('')
+  const [historyLocFilter, setHistoryLocFilter] = useState('Semua')
+  const [historyPage, setHistoryPage] = useState(1)
   const [history, setHistory] = useState(() => {
     // Load history dari localStorage saat first mount
     try {
@@ -233,6 +237,23 @@ export default function QuickOpnamePage() {
       setRegistering(false)
     }
   }
+
+  // Filter & paginate history list
+  const historyLocations = ['Semua', ...Array.from(new Set(history.map(h => h.location).filter(Boolean)))]
+  const filteredHistory = history.filter(h => {
+    if (historyLocFilter !== 'Semua' && h.location !== historyLocFilter) return false
+    if (historySearch) {
+      const q = historySearch.toLowerCase()
+      const blob = [h.hostname, h.serial_number, h.brand_type].filter(Boolean).join(' ').toLowerCase()
+      if (!blob.includes(q)) return false
+    }
+    return true
+  })
+  const historyTotalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE))
+  const pageItems = filteredHistory.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
+
+  // Reset to page 1 when search/filter changes
+  useEffect(() => { setHistoryPage(1) }, [historySearch, historyLocFilter])
 
   return (
     <div className="min-h-screen bg-slate-50 py-4 px-3 sm:px-4">
@@ -479,9 +500,12 @@ export default function QuickOpnamePage() {
         {/* History recent */}
         {history.length > 0 && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider m-0 flex items-center gap-1.5">
-                <History size={12} /> Recent ({history.length})
+                <History size={12} /> Recent
+                <span className="text-slate-400 tabular-nums">
+                  ({filteredHistory.length}{filteredHistory.length !== history.length && ` / ${history.length}`})
+                </span>
               </p>
               <button
                 onClick={() => {
@@ -493,29 +517,95 @@ export default function QuickOpnamePage() {
                 Clear
               </button>
             </div>
-            <ul className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-              {history.map((h) => (
-                <li key={`${h.id}-${h.time}`} className="px-4 py-2.5 flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 size={14} className="text-emerald-600" strokeWidth={2.25} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-800 m-0 truncate">
-                      {h.hostname || h.serial_number || '—'}
-                    </p>
-                    <p className="text-[11px] text-slate-500 m-0 truncate">
-                      {h.brand_type || ''} · SN <span className="font-mono">{h.serial_number}</span>
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-[11px] font-semibold text-slate-700 m-0">{h.location}</p>
-                    <p className="text-[10px] text-slate-400 m-0 flex items-center gap-0.5 justify-end">
-                      <Clock size={9} /> {fmtTime(h.time)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+
+            {/* Toolbar: search + filter lokasi */}
+            <div className="px-3 py-2 border-b border-slate-100 flex gap-2 bg-slate-50/40 flex-wrap">
+              <div className="relative flex-1 min-w-[160px]">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={historySearch}
+                  onChange={e => setHistorySearch(e.target.value)}
+                  placeholder="Cari hostname, SN, brand..."
+                  className="w-full pl-7 pr-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:border-blue-400 placeholder-slate-400"
+                />
+              </div>
+              <select
+                value={historyLocFilter}
+                onChange={e => setHistoryLocFilter(e.target.value)}
+                className="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:border-blue-400 cursor-pointer max-w-[160px]"
+              >
+                {historyLocations.map(l => (
+                  <option key={l} value={l}>{l === 'Semua' ? 'Semua Lokasi' : l}</option>
+                ))}
+              </select>
+              {(historySearch || historyLocFilter !== 'Semua') && (
+                <button
+                  onClick={() => { setHistorySearch(''); setHistoryLocFilter('Semua') }}
+                  className="px-2 py-1.5 text-[11px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors border-0 bg-transparent cursor-pointer flex items-center gap-1"
+                >
+                  <X size={10} /> Reset
+                </button>
+              )}
+            </div>
+
+            {filteredHistory.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-slate-400">
+                Tidak ada hasil yang cocok dengan filter.
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {pageItems.map((h) => (
+                  <li key={`${h.id}-${h.time}`} className="px-4 py-2.5 flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 size={14} className="text-emerald-600" strokeWidth={2.25} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-800 m-0 truncate">
+                        {h.hostname || h.serial_number || '—'}
+                      </p>
+                      <p className="text-[11px] text-slate-500 m-0 truncate">
+                        {h.brand_type || ''} · SN <span className="font-mono">{h.serial_number}</span>
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-[11px] font-semibold text-slate-700 m-0">{h.location}</p>
+                      <p className="text-[10px] text-slate-400 m-0 flex items-center gap-0.5 justify-end">
+                        <Clock size={9} /> {fmtTime(h.time)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Pagination */}
+            {filteredHistory.length > PAGE_SIZE && (
+              <div className="px-3 py-2.5 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50/40">
+                <p className="text-[11px] text-slate-500 tabular-nums">
+                  {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, filteredHistory.length)} dari {filteredHistory.length}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                    disabled={historyPage === 1}
+                    className="flex items-center px-2 py-1 text-xs border border-slate-200 rounded-md text-slate-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer bg-white"
+                  >
+                    <ChevronLeft size={13} strokeWidth={2.5} />
+                  </button>
+                  <span className="px-2 text-[11px] tabular-nums text-slate-700 font-semibold">
+                    {historyPage} / {historyTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
+                    disabled={historyPage === historyTotalPages}
+                    className="flex items-center px-2 py-1 text-xs border border-slate-200 rounded-md text-slate-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer bg-white"
+                  >
+                    <ChevronRight size={13} strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
