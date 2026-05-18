@@ -126,7 +126,7 @@ function LaptopDetailModal({ laptop, onClose }) {
                 { label: 'Kode Aset',     value: laptop.asset_code },
                 { label: 'Tipe',          value: laptop.device_type },
                 { label: 'Merek/Model',   value: laptop.brand_type },
-                { label: 'Lokasi',        value: laptop.location },
+                { label: 'Lokasi',        value: laptop.storage_location || laptop.location },
               ].map(({ label, value }) => value ? (
                 <div key={label} className="flex items-center justify-between py-1.5 border-b border-gray-50">
                   <span className="text-xs text-gray-400 w-28 flex-shrink-0">{label}</span>
@@ -268,7 +268,7 @@ export default function LaptopList({ refreshTrigger, onEdit }) {
               { label: 'Unit',           key: 'unit' },
               { label: 'Tipe',           key: 'device_type' },
               { label: 'Merek/Model',    key: 'brand_type' },
-              { label: 'Lokasi',         key: 'location' },
+              { label: 'Lokasi',         render: r => r.storage_location || r.location || '—' },
               { label: 'Status', render: r => STATUS_CONFIG[r.status]?.label ?? r.status ?? '—' },
             ],
           })}
@@ -368,7 +368,7 @@ export default function LaptopList({ refreshTrigger, onEdit }) {
 
                   {/* Lokasi */}
                   <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                    {laptop.location ?? <span className="text-gray-300">—</span>}
+                    {laptop.storage_location || laptop.location || <span className="text-gray-300">—</span>}
                   </td>
 
                   {/* Status — dropdown (admin) atau badge (staff) */}
