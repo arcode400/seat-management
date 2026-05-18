@@ -16,7 +16,7 @@ const LOCATIONS = [
 const STORAGE_KEY_LOCATION = 'opname-default-location'
 const STORAGE_KEY_HISTORY  = 'opname-recent-history'
 const STORAGE_KEY_REGSTATUS = 'opname-register-status'
-const MAX_HISTORY = 50
+const MAX_HISTORY = 1000
 
 const STATUS_OPTIONS = [
   { value: 'rusak',       label: 'Tidak Aktif (warisan / cadangan)' },
