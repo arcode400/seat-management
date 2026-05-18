@@ -30,6 +30,28 @@ export async function updateFormKomplain(id, fields) {
   return data
 }
 
+export async function closeFormKomplain(id, closedBy) {
+  const { data, error } = await supabase
+    .from('form_komplain')
+    .update({ closed_at: new Date().toISOString(), closed_by: closedBy })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function reopenFormKomplain(id) {
+  const { data, error } = await supabase
+    .from('form_komplain')
+    .update({ closed_at: null, closed_by: null })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
 export async function deleteFormKomplain(id) {
   const { error } = await supabase
     .from('form_komplain')

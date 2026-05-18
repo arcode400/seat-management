@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
-import { FileText, Printer, Trash2, MessageSquareWarning, FileDown, Edit3 } from 'lucide-react'
-import { getAllFormKomplain, deleteFormKomplain } from '../services/formKomplainService'
+import { FileText, Printer, Trash2, MessageSquareWarning, FileDown, Edit3, CheckCircle2, RotateCcw } from 'lucide-react'
+import { getAllFormKomplain, deleteFormKomplain, closeFormKomplain, reopenFormKomplain } from '../services/formKomplainService'
 import { printFormKomplain } from '../utils/printFormKomplain'
 import { printReport } from '../utils/printReport'
 import { useAuth } from '../context/AuthContext'
 import EditFormKomplainModal from './EditFormKomplainModal'
 
 export default function FormKomplainList({ refreshTrigger }) {
-  const { isSuperAdmin, isAdmin, isStaff } = useAuth()
+  const { user, isSuperAdmin, isAdmin, isStaff } = useAuth()
   const [editing, setEditing] = useState(null)
   const canEdit = isAdmin || isStaff
+  const canClose = isAdmin || isStaff
   const [list, setList]       = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
@@ -44,10 +45,12 @@ export default function FormKomplainList({ refreshTrigger }) {
   }
 
   function getStatus(fk) {
-    // Status komplain: 3 tier
+    // Status komplain: 4 tier
     // - 'waiting_user'  → link sudah dibuat, user belum isi & TTD
     // - 'in_progress'   → user sudah TTD, teknisi belum tindak lanjut & TTD
     // - 'solved'        → teknisi sudah tindak lanjut & TTD
+    // - 'closed'        → case final closed (sparepart datang / perangkat OK)
+    if (fk.closed_at) return 'closed'
     if (!fk.signature_pelapor) return 'waiting_user'
     if (!fk.signature_penerima || !fk.tindak_lanjut) return 'in_progress'
     return 'solved'
@@ -58,6 +61,7 @@ export default function FormKomplainList({ refreshTrigger }) {
       waiting_user: { bg: '#F3F4F6', color: '#6B7280', label: 'Menunggu User',  dot: '#9CA3AF' },
       in_progress:  { bg: '#FEF3C7', color: '#92400E', label: 'Menunggu Tindak Lanjut', dot: '#F59E0B' },
       solved:       { bg: '#DCFCE7', color: '#166534', label: 'Selesai',        dot: '#10B981' },
+      closed:       { bg: '#DBEAFE', color: '#1E40AF', label: 'Closed',         dot: '#2563EB' },
     }
     const s = styles[status] || styles.waiting_user
     return (
@@ -67,6 +71,22 @@ export default function FormKomplainList({ refreshTrigger }) {
         {s.label}
       </span>
     )
+  }
+
+  async function handleClose(id, pelapor) {
+    if (!confirm(`Tandai komplain "${pelapor || 'tanpa nama'}" sebagai Closed?\n\nPastikan barang/sparepart sudah diterima & perangkat sudah OK. Setelah Closed, komplain ini gak akan masuk daftar perlu di-handle lagi.`)) return
+    try {
+      await closeFormKomplain(id, user?.email ?? 'system')
+      setList(await getAllFormKomplain())
+    } catch (err) { alert(err.message) }
+  }
+
+  async function handleReopen(id, pelapor) {
+    if (!confirm(`Buka kembali komplain "${pelapor || 'tanpa nama'}" (reopen)?\n\nStatus akan kembali ke "Selesai" supaya bisa di-edit ulang.`)) return
+    try {
+      await reopenFormKomplain(id)
+      setList(await getAllFormKomplain())
+    } catch (err) { alert(err.message) }
   }
 
   if (loading) return (
@@ -124,7 +144,8 @@ export default function FormKomplainList({ refreshTrigger }) {
           {list.map((fk, i) => {
             const status = getStatus(fk)
             // Subtle background tint sesuai status
-            const tintBg = status === 'solved' ? '#F0FDF4'
+            const tintBg = status === 'closed' ? '#EFF6FF'
+                         : status === 'solved' ? '#F0FDF4'
                          : status === 'in_progress' ? '#FFFBEB'
                          : (i % 2 === 0 ? 'white' : '#FAFAFA')
             return (
@@ -174,13 +195,33 @@ export default function FormKomplainList({ refreshTrigger }) {
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EFF6FF'}>
                     <Printer size={12} /> Print
                   </button>
-                  {canEdit && (
+                  {canEdit && status !== 'closed' && (
                     <button onClick={() => setEditing(fk)}
                       className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
                       style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FDE68A'}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FEF3C7'}>
                       <Edit3 size={12} /> Edit
+                    </button>
+                  )}
+                  {canClose && status === 'solved' && (
+                    <button onClick={() => handleClose(fk.id, fk.pelapor_nama)}
+                      title="Tandai komplain sebagai Closed — sparepart datang / perangkat OK"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                      style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#BFDBFE'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#DBEAFE'}>
+                      <CheckCircle2 size={12} /> Close
+                    </button>
+                  )}
+                  {canClose && status === 'closed' && (
+                    <button onClick={() => handleReopen(fk.id, fk.pelapor_nama)}
+                      title="Buka kembali komplain ini (reopen)"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border-0 cursor-pointer"
+                      style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#E5E7EB'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F3F4F6'}>
+                      <RotateCcw size={12} /> Reopen
                     </button>
                   )}
                   {isSuperAdmin && (
