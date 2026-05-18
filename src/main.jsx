@@ -10,6 +10,7 @@ import PublicBASTSignPage from './pages/PublicBASTSignPage.jsx'
 import PublicBAPSignPage from './pages/PublicBAPSignPage.jsx'
 import PublicKomplainSignPage from './pages/PublicKomplainSignPage.jsx'
 import QuickOpnamePage from './pages/QuickOpnamePage.jsx'
+import OpnameReportPage from './pages/OpnameReportPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/bap-sign/:id" element={<PublicBAPSignPage />} />
           <Route path="/komplain-sign/:id" element={<PublicKomplainSignPage />} />
           <Route path="/opname" element={<ProtectedRoute><QuickOpnamePage /></ProtectedRoute>} />
+          <Route path="/laporan-opname" element={<ProtectedRoute><OpnameReportPage /></ProtectedRoute>} />
           <Route
             path="/dashboard"
             element={

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, ScrollText, BarChart2, Bell, Settings, LogOut,
   AlertTriangle, FileText, PackageX, MessageSquareWarning, Package, ClipboardCheck,
-  ChevronLeft, ChevronRight, Circle, ScanLine,
+  ChevronLeft, ChevronRight, Circle, ScanLine, FileBarChart,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { key: 'BAKhusus',     icon: PackageX,            label: 'BA Pengeluaran' },
   { key: 'FormKomplain', icon: MessageSquareWarning, label: 'Form Komplain' },
   { key: 'Opname',       icon: ScanLine,            label: 'Quick Opname', route: '/opname' },
+  { key: 'OpnameReport', icon: FileBarChart,        label: 'Laporan Opname', route: '/laporan-opname' },
   { key: 'Users',        icon: Users,               label: 'Users' },
   { key: 'Logs',         icon: ScrollText,          label: 'Logs' },
   { key: 'Settings',     icon: Settings,            label: 'PIC IT' },
@@ -48,7 +49,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose, onCol
 
   const STAFF_ONLY = ['Dashboard', 'Laptops', 'Peminjaman', 'Issues', 'FormKomplain']
   // Opname: hanya super_admin yang boleh akses
-  const SUPER_ADMIN_ONLY = ['Opname']
+  const SUPER_ADMIN_ONLY = ['Opname', 'OpnameReport']
   const visibleNav = isStaff
     ? NAV_ITEMS.filter(i => STAFF_ONLY.includes(i.key))
     : NAV_ITEMS.filter(i => {
