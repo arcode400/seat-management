@@ -17,14 +17,31 @@ export async function findLaptopBySN(sn) {
 }
 
 // Tandai laptop di lokasi tertentu (Quick Opname)
+// Catatan: kalau laptop saat ini berstatus 'available', auto-set jadi 'rusak'
+// (asumsi: laptop yang ada di gudang & di-opname = tidak aktif / cadangan)
+// Tidak menyentuh status 'in_use' (laptop sedang dipinjam) atau 'maintenance'
 export async function tagLaptopOpname(id, location, opnameBy) {
+  // Cek status saat ini
+  const { data: current, error: errCur } = await supabase
+    .from('laptops')
+    .select('status')
+    .eq('id', id)
+    .single()
+  if (errCur) throw new Error(errCur.message)
+
+  const payload = {
+    storage_location: location,
+    last_opname_at:   new Date().toISOString(),
+    last_opname_by:   opnameBy ?? 'unknown',
+  }
+  // Demote 'available' → 'rusak' (Tidak Aktif) supaya gak muncul di tab Tersedia
+  if (current?.status === 'available') {
+    payload.status = 'rusak'
+  }
+
   const { data, error } = await supabase
     .from('laptops')
-    .update({
-      storage_location: location,
-      last_opname_at:   new Date().toISOString(),
-      last_opname_by:   opnameBy ?? 'unknown',
-    })
+    .update(payload)
     .eq('id', id)
     .select()
     .single()
