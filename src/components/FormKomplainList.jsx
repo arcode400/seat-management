@@ -43,6 +43,32 @@ export default function FormKomplainList({ refreshTrigger }) {
     return new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
+  function getStatus(fk) {
+    // Status komplain: 3 tier
+    // - 'waiting_user'  → link sudah dibuat, user belum isi & TTD
+    // - 'in_progress'   → user sudah TTD, teknisi belum tindak lanjut & TTD
+    // - 'solved'        → teknisi sudah tindak lanjut & TTD
+    if (!fk.signature_pelapor) return 'waiting_user'
+    if (!fk.signature_penerima || !fk.tindak_lanjut) return 'in_progress'
+    return 'solved'
+  }
+
+  function StatusBadge({ status }) {
+    const styles = {
+      waiting_user: { bg: '#F3F4F6', color: '#6B7280', label: 'Menunggu User',  dot: '#9CA3AF' },
+      in_progress:  { bg: '#FEF3C7', color: '#92400E', label: 'Menunggu Tindak Lanjut', dot: '#F59E0B' },
+      solved:       { bg: '#DCFCE7', color: '#166534', label: 'Selesai',        dot: '#10B981' },
+    }
+    const s = styles[status] || styles.waiting_user
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap"
+        style={{ backgroundColor: s.bg, color: s.color }}>
+        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.dot }} />
+        {s.label}
+      </span>
+    )
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center py-12 gap-2 text-gray-400 text-sm">
       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -89,15 +115,25 @@ export default function FormKomplainList({ refreshTrigger }) {
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr style={{ borderBottom: '2px solid #F3F4F6' }}>
-            {['Pelapor','Barang','Masalah','Waktu Laporan','Penerima','Aksi'].map(h => (
+            {['Status','Pelapor','Barang','Masalah','Waktu Laporan','Penerima','Aksi'].map(h => (
               <th key={h} className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {list.map((fk, i) => (
+          {list.map((fk, i) => {
+            const status = getStatus(fk)
+            // Subtle background tint sesuai status
+            const tintBg = status === 'solved' ? '#F0FDF4'
+                         : status === 'in_progress' ? '#FFFBEB'
+                         : (i % 2 === 0 ? 'white' : '#FAFAFA')
+            return (
             <tr key={fk.id}
-              style={{ borderBottom: '1px solid #F9FAFB', backgroundColor: i % 2 === 0 ? 'white' : '#FAFAFA' }}>
+              style={{ borderBottom: '1px solid #F9FAFB', backgroundColor: tintBg }}>
+
+              <td className="px-3 py-3">
+                <StatusBadge status={status} />
+              </td>
 
               <td className="px-3 py-3">
                 <div className="flex items-center gap-1.5">
@@ -159,7 +195,8 @@ export default function FormKomplainList({ refreshTrigger }) {
                 </div>
               </td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
 
