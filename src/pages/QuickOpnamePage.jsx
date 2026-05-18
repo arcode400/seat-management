@@ -15,7 +15,14 @@ const LOCATIONS = [
 
 const STORAGE_KEY_LOCATION = 'opname-default-location'
 const STORAGE_KEY_HISTORY  = 'opname-recent-history'
+const STORAGE_KEY_REGSTATUS = 'opname-register-status'
 const MAX_HISTORY = 50
+
+const STATUS_OPTIONS = [
+  { value: 'rusak',       label: 'Tidak Aktif (warisan / cadangan)' },
+  { value: 'available',   label: 'Tersedia (siap pinjam)' },
+  { value: 'maintenance', label: 'Perbaikan' },
+]
 
 function fmtTime(ts) {
   try {
@@ -148,7 +155,12 @@ export default function QuickOpnamePage() {
   }
 
   function openRegister(sn) {
-    setRegisterMode({ sn: sn.toUpperCase(), brand: '', hostname: '' })
+    let defaultStatus = 'rusak'
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_REGSTATUS)
+      if (saved && STATUS_OPTIONS.some(o => o.value === saved)) defaultStatus = saved
+    } catch {}
+    setRegisterMode({ sn: sn.toUpperCase(), brand: '', hostname: '', status: defaultStatus })
     setLastResult(null)
   }
 
@@ -162,11 +174,14 @@ export default function QuickOpnamePage() {
     }
     setRegistering(true)
     try {
+      // Simpan status pilihan terakhir buat default berikutnya
+      try { localStorage.setItem(STORAGE_KEY_REGSTATUS, registerMode.status || 'rusak') } catch {}
+
       const created = await addLaptop({
         serial_number: registerMode.sn.trim().toUpperCase(),
         brand_type:    registerMode.brand.trim().toUpperCase(),
         hostname:      registerMode.hostname.trim() || null,
-        status:        'available',
+        status:        registerMode.status || 'rusak',
         storage_location: effectiveLocation,
         last_opname_at:   new Date().toISOString(),
         last_opname_by:   user?.email ?? null,
@@ -382,6 +397,24 @@ export default function QuickOpnamePage() {
                   placeholder="Bisa diisi nanti pas agent install"
                   className="w-full px-3 py-2.5 text-sm font-mono uppercase border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  Status Awal
+                </label>
+                <select
+                  value={registerMode.status || 'rusak'}
+                  onChange={e => setRegisterMode(m => ({ ...m, status: e.target.value }))}
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
+                >
+                  {STATUS_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400 mt-1 m-0">
+                  💡 Default <strong>Tidak Aktif</strong> — untuk perangkat warisan / cadangan di gudang. Ganti kalau perlu.
+                </p>
               </div>
 
               <div className="rounded-lg p-2.5 text-xs flex items-center gap-2"
