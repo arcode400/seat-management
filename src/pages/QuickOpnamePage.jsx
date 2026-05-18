@@ -6,8 +6,12 @@ import { findLaptopBySN, tagLaptopOpname, addLaptop, getRecentOpname } from '../
 
 const LOCATIONS = [
   'Gudang Graha AP1',
-  'Kantor Cabang Jakarta',
   'Kantor APINDO',
+  'Gedung 628 SSC',
+  'Gedung 600',
+  'Gedung 628 ERP',
+  'Gedung ACD IALC',
+  'Kantor Cabang Jakarta',
   'Kantor Gapura',
   'CGK',
   'Lainnya',
