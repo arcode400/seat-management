@@ -14,6 +14,8 @@ const LOCATIONS = [
 ]
 
 const STORAGE_KEY_LOCATION = 'opname-default-location'
+const STORAGE_KEY_HISTORY  = 'opname-recent-history'
+const MAX_HISTORY = 50
 
 function fmtTime(ts) {
   try {
@@ -30,12 +32,27 @@ export default function QuickOpnamePage() {
   const [sn, setSn] = useState('')
   const [busy, setBusy] = useState(false)
   const [lastResult, setLastResult] = useState(null) // { success, laptop, message, time }
-  const [history, setHistory] = useState([]) // recent opname this session
+  const [history, setHistory] = useState(() => {
+    // Load history dari localStorage saat first mount
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_HISTORY)
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch { return [] }
+  })
   const inputRef = useRef(null)
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY_LOCATION, location) } catch {}
   }, [location])
+
+  // Persist history ke localStorage tiap berubah
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history.slice(0, MAX_HISTORY)))
+    } catch {}
+  }, [history])
 
   // Auto-focus ke SN input setelah operasi selesai
   useEffect(() => {
@@ -88,7 +105,7 @@ export default function QuickOpnamePage() {
         time: Date.now(),
       }
       setLastResult(result)
-      setHistory(h => [{ ...laptop, time: Date.now(), location: effectiveLocation }, ...h].slice(0, 50))
+      setHistory(h => [{ ...laptop, time: Date.now(), location: effectiveLocation }, ...h].slice(0, MAX_HISTORY))
       setSn('')
     } catch (err) {
       setLastResult({ success: false, message: err.message, time: Date.now() })
@@ -213,7 +230,12 @@ export default function QuickOpnamePage() {
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider m-0 flex items-center gap-1.5">
                 <History size={12} /> Recent ({history.length})
               </p>
-              <button onClick={() => setHistory([])}
+              <button
+                onClick={() => {
+                  if (confirm('Bersihkan list "Recent" di UI? Data di database tetap aman.')) {
+                    setHistory([])
+                  }
+                }}
                 className="text-[10px] text-slate-400 hover:text-rose-600 transition-colors border-0 bg-transparent cursor-pointer">
                 Clear
               </button>
