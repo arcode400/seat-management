@@ -7,19 +7,19 @@
 
 ---
 
-## 1. 🚪 SOP TARIK ASET DARI GUDANG
+## 1. 💸 SOP PENAGIHAN DARI KOMERSIAL KE OPERASIONAL
 
-- Operasional dapat narik aset dari gudang
+- Operasional dapat **narik tagihan** (issue/proses tagihan)
 - **Syarat**: SPK (Surat Perintah Kerja) sudah ditandatangani pejabat
-- Tanpa SPK signed → **TIDAK BOLEH** dikeluarkan
+- Tanpa SPK signed → **TIDAK BOLEH** narik tagihan
 
-### ✅ Checklist verifikasi SPK sebelum release aset
+### ✅ Checklist verifikasi SPK sebelum narik tagihan
 
 1. **Tanggal** — masih berlaku / kadaluarsa?
-2. **Judul** — sesuai dengan request / scope kerja?
+2. **Judul** — sesuai dengan scope kerja yang akan ditagihkan?
 3. **Sign** — sudah ditandatangani pejabat?
 
-Salah satu gak lolos → **tolak**, jangan release aset.
+Salah satu gak lolos → **tolak**, jangan proses tagihan dulu.
 
 ---
 
