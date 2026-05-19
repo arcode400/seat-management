@@ -82,7 +82,24 @@ Hirarki dari atas ke bawah:
 
 ---
 
-## 6. 🔄 ALUR DOKUMEN / TAGIHAN
+## 6. 📎 PROSES BAPP — Data Dukung & LPP
+
+Untuk proses BAPP (Berita Acara Pemeriksaan Pekerjaan), wajib lampirkan:
+
+- **Data dukung** (dokumentasi pekerjaan: foto, log, laporan harian, dll)
+- **LPP** (Laporan Penyelesaian Pekerjaan)
+
+Tanpa kedua lampiran ini → BAPP tidak bisa diproses.
+
+**Action item**:
+
+- [ ] Tanya Adam: format LPP-nya kayak gimana, ada template?
+- [ ] Tanya Adam: data dukung minimal yang harus dilampirkan apa aja per project?
+- [ ] Minta contoh LPP & data dukung dari Adam (file Word/PDF)
+
+---
+
+## 7. 🔄 ALUR DOKUMEN / TAGIHAN
 
 ```
 USER ──────────► KOMERSIAL
