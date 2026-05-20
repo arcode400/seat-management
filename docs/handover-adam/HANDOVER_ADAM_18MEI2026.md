@@ -161,16 +161,42 @@ Bisa di-improve via sistem Seat Management:
 
 ---
 
-## 📞 KONTAK PENTING (isi nanti)
+## 📞 KONTAK PENTING
+
+### Commercial APS Pusat
+
+| Nama | Scope | WA / Email |
+|------|-------|------------|
+| **Uda Syahrul** | PIC Commercial APS Pusat — Pekerjaan **Sewa Kendaraan Direksi & Kendaraan Ops APINDO** | _____ |
+| **Mas Gustendi** | PIC Commercial APS Pusat — Pekerjaan **Seat Management, Helpdesk Layer 1, AIS IATA** | _____ |
+
+### Klien (PT Angkasa Pura Indonesia)
+
+| Nama | Role / Project | WA / Email |
+|------|----------------|------------|
+| **Mas Faizal** | PIC IATA API | _____ |
+| Meiske Margaretha Sigarlaki | Corporate Social Responsibility & General Services Group Head | (TTD klien di BAST/BAPP Kendaraan) |
+| Gunawan Sugarnadi | Office Facilities Division Head | (TTD klien di BAPP Kendaraan) |
+
+### Internal & Lainnya
 
 | Role | Nama | WA / Email |
 |------|------|------------|
 | Mas Adam (post-resign) | Adam | _____ |
-| PIC Komersial | _____ | _____ |
 | PIC Keuangan | _____ | _____ |
-| PIC Mobil Operasional | _____ | _____ |
-| PIC IATA | _____ | _____ |
+| PIC Mobil Operasional (lapangan) | _____ | _____ |
 | PIC Gapura | _____ | _____ |
+| Co BM / Wakil BM | Rizky Akbar | +62 858-7877-1102 |
+
+### 🎯 Quick reference — kontak per project
+
+| Project | PIC Commercial | PIC Klien |
+|---------|----------------|-----------|
+| Sewa Kendaraan Direksi | Uda Syahrul | Meiske / Gunawan |
+| Sewa Kendaraan Ops APINDO | Uda Syahrul | Meiske / Gunawan |
+| Seat Management | Mas Gustendi | _____ |
+| Helpdesk Layer 1 | Mas Gustendi | _____ |
+| AIS IATA | Mas Gustendi | Mas Faizal |
 
 ---
 
