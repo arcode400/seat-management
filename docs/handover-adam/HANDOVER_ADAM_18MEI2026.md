@@ -205,14 +205,14 @@ Bisa di-improve via sistem Seat Management:
 
 | Nama | Scope | WA / Email |
 |------|-------|------------|
-| **Uda Syahrul** | PIC Commercial APS Pusat — Pekerjaan **Sewa Kendaraan Direksi & Kendaraan Ops APINDO** | _____ |
-| **Mas Gustendi** | PIC Commercial APS Pusat — Pekerjaan **Seat Management, Helpdesk Layer 1, AIS IATA** | _____ |
+| **Uda Syahrul** | PIC Commercial APS Pusat — Pekerjaan **Sewa Kendaraan Direksi & Kendaraan Ops APINDO** | +62 813-8784-2816 |
+| **Mas Gustendi** (Rizky Gustandi, APS HO) | PIC Commercial APS Pusat — Pekerjaan **Seat Management, Helpdesk Layer 1, AIS IATA** | +62 822-4818-8086 |
 
 ### Klien (PT Angkasa Pura Indonesia)
 
 | Nama | Role / Project | WA / Email |
 |------|----------------|------------|
-| **Mas Faizal** | PIC IATA API | _____ |
+| **Mas Faizal** | PIC IATA APINDO | +62 811-1702-667 |
 | Meiske Margaretha Sigarlaki | Corporate Social Responsibility & General Services Group Head | (TTD klien di BAST/BAPP Kendaraan) |
 | Gunawan Sugarnadi | Office Facilities Division Head | (TTD klien di BAPP Kendaraan) |
 
@@ -220,9 +220,10 @@ Bisa di-improve via sistem Seat Management:
 
 | Role | Nama | WA / Email |
 |------|------|------------|
-| Mas Adam (post-resign) | Adam | _____ |
-| PIC Keuangan | _____ | _____ |
-| PIC Mobil Operasional (lapangan) | _____ | _____ |
+| Mas Adam (post-resign) | Adam | +62 812-9006-3374 |
+| PIC Keuangan (request invoice pembayaran) | Mbak Jetmi (APS Cabang Jakarta) | +62 857-7197-4214 |
+| PIC Mobil Operasional (lapangan) | Mas Asri | +62 831-6266-8823 |
+| PIC Mobil Operasional (lapangan) | Om Rustam | +62 821-1345-1749 |
 | PIC Gapura | _____ | _____ |
 | Co BM / Wakil BM | Rizky Akbar | +62 858-7877-1102 |
 
