@@ -1,7 +1,7 @@
 # 📋 CATATAN HANDOVER MAS ADAM
 
-**Tanggal**: Senin, 18 Mei 2026
-**Lokasi**: Gudang Graha AP1
+**Tanggal**: Selasa, 19 Mei 2026
+**Lokasi**: Kantor Cabang Jakarta
 **Penerima Handover**: Muhammad Aris Saputro
 **Pemberi Handover**: Mas Adam (resign)
 
@@ -239,4 +239,4 @@ Bisa di-improve via sistem Seat Management:
 
 ---
 
-**📌 Last update**: 18 Mei 2026 — sesi handover hari 1
+**📌 Last update**: 19 Mei 2026 — sesi handover hari 1
