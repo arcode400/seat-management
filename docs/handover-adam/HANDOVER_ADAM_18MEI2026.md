@@ -121,6 +121,44 @@ USER ──────────► KOMERSIAL
 
 ---
 
+## 8. 🚗 PERIODE PENANGGALAN TAGIHAN KENDARAAN
+
+Penting buat penanggalan di **LPP (Laporan Penyelesaian Pekerjaan)** & BAPP kendaraan.
+
+### Periode tagihan bulanan per jenis kendaraan
+
+| Jenis Kendaraan | Periode bulanan | Jumlah Unit |
+|-----------------|-----------------|-------------|
+| **Mobil Operasional APINDO** | tanggal **5 → 4** bulan berikutnya | — |
+| **Kendaraan Direksi (batch 2024)** | tanggal **20 → 19** bulan berikutnya | 4 unit |
+| **Kendaraan Direksi (batch 2023)** | tanggal **8 → 7** bulan berikutnya | 4 unit |
+
+### Struktur 8 unit Kendaraan Direksi
+
+- **Total: 8 unit** kendaraan direksi
+  - **4 unit** pengadaan **2023** (duluan)
+  - **4 unit** pengadaan **2024** (tambahan)
+- **Kenapa nambah 4 unit di 2024**: pas merger, ada penambahan direksi → nambah kendaraan
+- **BAPP-nya BEDA** antara batch 2023 & 2024 — karena beda tahun pengadaan & beda periode penanggalan (8→7 vs 20→19)
+
+### PIC Koordinasi Mobil Operasional
+
+- **Bu Meiske** tektokan (koordinasi bolak-balik) urusan mobil operasional dengan:
+  - **Asri**
+  - **Mas Rustam**
+
+→ Kalau ada urusan mobil operasional, koordinasi lewat Asri & Mas Rustam.
+
+### ⚠️ Implikasi praktis
+
+- Bikin **BAPP & LPP terpisah** untuk: Mobil Operasional, Kendaraan Direksi 2023, Kendaraan Direksi 2024
+- **Penanggalan di LPP** harus sesuai periode masing-masing:
+  - Operasional → periode tgl 5 s/d 4
+  - Direksi 2024 → periode tgl 20 s/d 19
+  - Direksi 2023 → periode tgl 8 s/d 7
+
+---
+
 ## ✅ ACTION ITEMS
 
 ### Minggu ini (selama transisi sama Adam)
