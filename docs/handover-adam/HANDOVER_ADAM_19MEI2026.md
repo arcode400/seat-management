@@ -159,6 +159,30 @@ Penting buat penanggalan di **LPP (Laporan Penyelesaian Pekerjaan)** & BAPP kend
 
 ---
 
+## 9. 🛩️ PROJECT GAPURA — EQ (Aircraft Towing Bar / ATB)
+
+Project Gapura, scope **EQ = Aircraft Towing Bar (ATB)**.
+
+### 2 Kontrak pekerjaan
+
+| Kontrak | Cabang / Lokasi |
+|---------|-----------------|
+| **Kontrak 1** | Batam |
+| **Kontrak 2** | PDG, KJT, UPG, BPN, PKU |
+
+> Kontrak 2 mencakup 5 lokasi: Padang (PDG), Kertajati (KJT), Ujung Pandang/Makassar (UPG), Balikpapan (BPN), Pekanbaru (PKU).
+> *(Konfirmasi ke Adam: kepanjangan kode lokasi sudah benar?)*
+
+### Penagihan
+
+- Penagihan **awal bulan** dan **akhir bulan**.
+- Tagihan baru bisa **diproses setelah masuk awal bulan berikutnya**.
+  (mis. tagihan periode akhir bulan baru bisa ditagihkan begitu masuk awal bulan depan)
+- Tiap **awal bulan** dikasih **BA (Berita Acara) penggunaan perangkat ATB**
+  di masing-masing cabang — jadi dasar penagihan.
+
+---
+
 ## ✅ ACTION ITEMS
 
 ### Minggu ini (selama transisi sama Adam)
