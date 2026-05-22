@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import usePolling from '../hooks/usePolling'
 import { getActiveSessions } from '../services/activeSessionService'
 import { logAction } from '../services/auditService'
 import { useAuth } from '../context/AuthContext'
@@ -35,11 +36,7 @@ export default function UsersPage({ isSuperAdmin }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(null)
 
-  useEffect(() => {
-    fetchAll()
-    const interval = setInterval(fetchAll, 30 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+  usePolling(fetchAll, 3 * 60 * 1000)
 
   async function fetchAll() {
     try {

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { getAllLaptops } from '../services/laptopService'
 import { getActiveBorrows } from '../services/transactionService'
+import usePolling from '../hooks/usePolling'
 import MonitoringMap from './MonitoringMap'
 
 const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000 // 10 menit
+const POLL_MS = 3 * 60 * 1000 // refresh data tiap 3 menit
 const OFFICE_WIFI = import.meta.env.VITE_OFFICE_WIFI
 const OFFICE_IPS = (import.meta.env.VITE_OFFICE_IP ?? '')
   .split(',').map(s => s.trim()).filter(Boolean)
@@ -54,14 +56,11 @@ export default function MonitoringList() {
   const [lastRefresh, setLastRefresh] = useState(new Date())
   const [now, setNow] = useState(Date.now())
 
+  usePolling(fetchData, POLL_MS)
+
   useEffect(() => {
-    fetchData()
-    const fetchInterval = setInterval(fetchData, 30 * 1000)
     const tickInterval = setInterval(() => setNow(Date.now()), 1000)
-    return () => {
-      clearInterval(fetchInterval)
-      clearInterval(tickInterval)
-    }
+    return () => clearInterval(tickInterval)
   }, [])
 
   async function fetchData() {

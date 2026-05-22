@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Monitor, Wifi, WifiOff, CheckCircle, Wrench, BookOpen, PowerOff, FileText, RotateCcw, AlertCircle, Edit3, Cpu, Download, AlertTriangle, TrendingUp, TrendingDown, ArrowDownRight, ArrowUpRight, ArrowRight } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getAllBeritaAcara } from '../services/beritaAcaraService'
+import usePolling from '../hooks/usePolling'
 import { getAllBAP } from '../services/beritaAcaraPengembalianService'
 import { supabase } from '../lib/supabase'
 import InfoTooltip from './InfoTooltip'
@@ -132,11 +133,7 @@ export default function DashboardCards() {
   const [periodYear, setPeriodYear]   = useState(today.getFullYear())
   const [periodMonth, setPeriodMonth] = useState(today.getMonth())
 
-  useEffect(() => {
-    fetchStats()
-    const interval = setInterval(fetchStats, 30 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+  usePolling(fetchStats, 3 * 60 * 1000)
 
   async function fetchStats() {
     try {

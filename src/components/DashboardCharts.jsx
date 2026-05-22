@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
+import usePolling from '../hooks/usePolling'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -96,11 +97,7 @@ export default function DashboardCharts() {
   const [latestVersion, setLatestVersion] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchAll()
-    const interval = setInterval(fetchAll, 30 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+  usePolling(fetchAll, 3 * 60 * 1000)
 
   async function fetchAll() {
     try {

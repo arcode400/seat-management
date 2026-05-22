@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Search, Download, X, Cpu, MemoryStick, HardDrive, Monitor, Wifi, MapPin, Clock, CircleDot, Inbox, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getAllLaptops } from '../services/laptopService'
 import { getActiveBorrows } from '../services/transactionService'
+import usePolling from '../hooks/usePolling'
 
 const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000
 const OFFICE_WIFI = import.meta.env.VITE_OFFICE_WIFI
@@ -297,11 +298,11 @@ export default function LaptopTable({ externalSearch = '' }) {
   const [page, setPage] = useState(1)
   const [selectedLaptop, setSelectedLaptop] = useState(null)
 
+  usePolling(fetchData, 3 * 60 * 1000)
+
   useEffect(() => {
-    fetchData()
-    const fetchInterval = setInterval(fetchData, 30 * 1000)
     const tickInterval = setInterval(() => setNow(Date.now()), 1000)
-    return () => { clearInterval(fetchInterval); clearInterval(tickInterval) }
+    return () => clearInterval(tickInterval)
   }, [])
 
   useEffect(() => setPage(1), [search, statusFilter, locationFilter, wifiFilter])
