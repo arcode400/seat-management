@@ -183,6 +183,21 @@ Project Gapura, scope **EQ = Aircraft Towing Bar (ATB)**.
 
 ---
 
+## 10. 💻 STATUS BAPP MANAGE SERVICE
+
+- **BAPP Manage Service sudah dikerjakan** untuk periode:
+  - November – Desember 2025
+  - Januari – Maret 2026
+- **Yang masih kurang** (belum lengkap sebagai data dukung):
+  - **Absensi**
+  - **Hasil Report kerjaan Manage Service**
+- **Cara melengkapi**: minta ke **Team Leader Manage Service — Fikry**.
+
+**Action item**: minta Absensi + Hasil Report Manage Service ke Fikry,
+untuk melengkapi data dukung BAPP Nov 2025 – Mar 2026.
+
+---
+
 ## ✅ ACTION ITEMS
 
 ### Minggu ini (selama transisi sama Adam)
@@ -248,7 +263,13 @@ Bisa di-improve via sistem Seat Management:
 | PIC Keuangan (request invoice pembayaran) | Mbak Jetmi (APS Cabang Jakarta) | +62 857-7197-4214 |
 | PIC Mobil Operasional (lapangan) | Mas Asri | +62 831-6266-8823 |
 | PIC Mobil Operasional (lapangan) | Om Rustam | +62 821-1345-1749 |
-| PIC Gapura | _____ | _____ |
+| PIC Gapura — Pekanbaru (PKU) | Bu Eka | +62 813-7424-9135 |
+| PIC Gapura — Kertajati (KJT) | Cheppy | +62 896-7648-4040 |
+| PIC Gapura — Balikpapan (BPN) | Widyansah | +62 853-1285-3023 |
+| PIC Gapura — Makassar (UPG) | Madil | +62 811-4111-608 |
+| PIC Gapura — Padang (PDG) | Supernady Sutomo | +62 812-1268-6293 |
+| PIC Gapura — Batam | Ibu Jellita | +62 877-2218-4629 |
+| Team Leader Manage Service (Absensi & Hasil Report) | Gartian Fikry | +62 896-6237-0509 |
 | Co BM / Wakil BM | Rizky Akbar | +62 858-7877-1102 |
 
 ### 🎯 Quick reference — kontak per project
