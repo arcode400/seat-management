@@ -10,9 +10,15 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { spawn } = require('child_process')
 
-const WATCHER_VERSION = '1.1.0'
+const WATCHER_VERSION = '1.2.0'
 const POLL_INTERVAL_MS = 30 * 1000
 const COMMAND_MAX_AGE_MS = 60 * 60 * 1000 // 1 jam — command lebih lama dianggap expired
+
+// Polling popup di-disable buat hemat egress Supabase.
+// Fitur popup ("show alert ke user 7+ hari di luar kantor") belum dipakai aktif,
+// jadi gak ada gunanya polling tiap 30 detik.
+// Set ke true kalau mau aktifin fitur popup-nya lagi.
+const POLLING_ENABLED = false
 
 // Embed popup script base64 supaya watcher self-contained
 // (sama dengan yang ada di monitor.js — sengaja diduplikasi agar tiap proses bisa mandiri)
@@ -156,10 +162,15 @@ async function safePoll() {
   catch (err) { log(`pollCommands wrapped error: ${err?.stack || err}`) }
 }
 
-safePoll()
-setInterval(safePoll, POLL_INTERVAL_MS)
+if (POLLING_ENABLED) {
+  safePoll()
+  setInterval(safePoll, POLL_INTERVAL_MS)
+  log(`Polling ENABLED (interval ${POLL_INTERVAL_MS / 1000}s)`)
+} else {
+  log('Polling DISABLED — feature flag POLLING_ENABLED=false. Watcher idle, no Supabase queries.')
+}
 
-// Heartbeat tiap 10 menit — bukti watcher masih hidup
+// Heartbeat tiap 10 menit — bukti watcher masih hidup (local log only, no Supabase)
 setInterval(() => log(`heartbeat — uptime ${Math.round(process.uptime() / 60)}m`), 10 * 60 * 1000)
 
 process.on('uncaughtException', (err) => {
