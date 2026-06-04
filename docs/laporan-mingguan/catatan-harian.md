@@ -46,3 +46,4 @@
 ## Jumat, 22 Mei 2026
 
 - **Laporan mingguan ke Bu Raisa** — rekap kegiatan minggu ini (18-22 Mei).
+- **Sheet monitoring "Monitoring Pekerjaan Ops Jakarta 2026" selesai dibuat & diisi** (permintaan Pak Rizky). 2 sheet: Daftar Pekerjaan + Checklist Per Bulan. Status dokumen tiap bulan (BAPP, LPP, Data Dukung, Tagihan, Pembayaran) sudah diisi lengkap dengan warna otomatis — termasuk baris SPK lama Sewa Kendaraan (era Mas Adam) ditandai Blocked.

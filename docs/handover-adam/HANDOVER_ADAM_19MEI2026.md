@@ -23,28 +23,6 @@ Salah satu gak lolos → **tolak**, jangan proses tagihan dulu.
 
 ---
 
-## 2. 💰 STRATEGI BILLING — Adjust Harga
-
-- Kalau ada kekurangan/penyesuaian harga di tagihan
-- Bisa "main" di line item **lebih cetak printer**
-- (printer consumable paling fleksibel karena variable)
-
-> ⚠️ **HATI-HATI**: konsultasi Bu Raisa dulu sebelum praktekin. Saya yang sign = saya yang bertanggung jawab kalau ada audit.
-
----
-
-## 3. 📋 SPK YANG SEDANG DITUNGGU DARI KOMERSIAL
-
-2 SPK pending:
-
-- **SPK Seat Management**
-- **SPK Helpdesk**
-
-Status: menunggu issued dari tim Komersial.
-
-**Action item**: follow-up Komersial setelah handover.
-
----
 
 ## 4. 💰 RUMUS BILLING MANAGE SERVICE
 
@@ -140,6 +118,7 @@ Penting buat penanggalan di **LPP (Laporan Penyelesaian Pekerjaan)** & BAPP kend
   - **4 unit** pengadaan **2024** (tambahan)
 - **Kenapa nambah 4 unit di 2024**: pas merger, ada penambahan direksi → nambah kendaraan
 - **BAPP-nya BEDA** antara batch 2023 & 2024 — karena beda tahun pengadaan & beda periode penanggalan (8→7 vs 20→19)
+- **Kontrak Pesanan-nya juga BEDA** antara batch 2023 & 2024 — masing-masing tahun punya Kontrak Pesanan sendiri. Jangan dicampur.
 
 ### PIC Koordinasi Mobil Operasional
 
@@ -188,13 +167,110 @@ Project Gapura, scope **EQ = Aircraft Towing Bar (ATB)**.
 - **BAPP Manage Service sudah dikerjakan** untuk periode:
   - November – Desember 2025
   - Januari – Maret 2026
-- **Yang masih kurang** (belum lengkap sebagai data dukung):
-  - **Absensi**
-  - **Hasil Report kerjaan Manage Service**
-- **Cara melengkapi**: minta ke **Team Leader Manage Service — Fikry**.
 
-**Action item**: minta Absensi + Hasil Report Manage Service ke Fikry,
+### Data dukung / lampiran di bawah BAPP Manage Service
+
+BAPP Manage Service wajib dilampiri 3 dokumen:
+
+1. **Laporan Kerja Manage Service**
+2. **Absensi**
+3. **Kontrak Manpower**
+
+- **Yang masih kurang**: **Absensi** & **Laporan Kerja Manage Service**.
+- **Cara melengkapi**: minta ke **Team Leader Manage Service — Gartian Fikry**.
+
+**Action item**: minta Absensi + Laporan Kerja Manage Service ke Fikry,
 untuk melengkapi data dukung BAPP Nov 2025 – Mar 2026.
+
+---
+
+## 11. 📄 BAST — TIMING (Berita Acara Serah Terima)
+
+- **BAST dibuat di AKHIR periode pekerjaan kontrak** — bukan di awal.
+- Fungsinya: serah terima hasil pekerjaan setelah kontrak selesai dijalankan.
+
+> ⚠️ Catatan: jangan ketuker. BAPP & LPP jalan tiap periode tagihan;
+> BAST baru muncul di akhir masa kontrak.
+
+---
+
+## 12. 🚗 PROJECT DRIVER GAPURA
+
+Project tambahan di Gapura (di luar EQ/ATB di section 9).
+
+### Detail Project
+
+- **Nama Project**: Jasa Penyediaan Driver Kantor Pusat PT Gapura Angkasa
+- **Partner / Pelaksana**: PT IAS Support Indonesia (kerjasama)
+- **PIC User (Gapura)**: **Bu Wulan** — +62 822-7268-7432
+
+### Kontak email koordinasi
+
+| To | unithci@gapura.id |
+|---|---|
+| CC | yussy.magdalena@gapura.id |
+| CC | sendika.panji@gapura.id |
+| BCC | wulan.dhari@gapura.id |
+
+### Penandatangan dokumen (contoh BAPP)
+
+| Pihak | Nama | Jabatan |
+|-------|------|---------|
+| **Pihak Pertama** (Gapura) | Yussy Magdalena | HC Industrial Relation & OS Management Division Head, PT Gapura Angkasa |
+| **Pihak Kedua** (Pelaksana) | Suchaeri | PGS Non Bandara Jakarta Project Manager, PT IAS Support Indonesia |
+
+### Contoh referensi
+
+- **BAPP No.**: IASS/KDSK/X/2025/PI.4 (16 Oktober 2025) — udah ada contoh dari Mas Adam
+
+### Catatan
+
+- **Project ini gak masuk handover awal Mas Adam** — baru diketahui dari WA Bu Raisa di grup, lalu di-clarify ke Adam.
+- **Action item**: pelajari detail proyek, template BAPP, periode penagihan, & koordinasi sama Bu Wulan.
+
+---
+
+## 13. 📝 INSTRUKSI MAS ARDY — FORMAT LPP SEAT MANAGEMENT
+
+Sumber: chat WA dengan Mas Ardy (M Ardy Prabowo) saat coordinate pembuatan LPP
+Periode 1 & 2 SPK Seat Management 2025.
+
+### Round 1 — Instruksi awal (saat handover masalah ke Mas Ardy)
+
+1. **Format pakai template lama** — judul disesuaikan di masing-masing SPK.
+2. **Periode**: yang tadinya total 1 bulan → langsung **2 bulan** (digabung).
+3. **Minta file mentah BA setelah nego** di masing-masing SPK ke Komersial
+   (Mas Gustendi). Aritmatika perhitungan diambil dari situ — angkanya
+   "pasti sama" (match SPK).
+4. **Kolom satuan perangkat**: HAPUS nilai rupiah per item. Cukup tampilkan
+   **satuan barang (unit) + jenis item** sesuai SPK & BA setelah nego.
+
+### Round 2 — Revisi setelah review template (lebih simplify)
+
+Setelah review template draft yang dikirim, Mas Ardy minta simplify lebih
+lanjut. Yang **HAPUS** dari header LPP:
+
+- ❌ Nomor Kontrak Payung
+- ❌ Tanggal Kontrak
+- ❌ Tanggal SPK
+- ❌ "PT. Angkasa Pura Airports" (judul atas)
+- ❌ Periode pembayaran
+
+### Penandatangan (TTD)
+
+| Posisi sebelumnya | Diganti jadi |
+|-------------------|--------------|
+| TTD: nama & jabatan **Pak Pit** | nama & jabatan **Mas Ardy** |
+| TTD: nama & jabatan **Pak Wahyu** | **Pak Pit** |
+
+> Artinya hirarki signing geser 1 level naik: Pak Wahyu → Pak Pit, Pak Pit → Mas Ardy.
+
+### ⚠️ Catatan penting
+
+- Mas Ardy slow respon — saat ini WA mungkin lama balas, jangan panik.
+- Selalu **konfirmasi ulang** ke Mas Ardy sebelum final, terutama untuk
+  perubahan hirarki TTD (sensitif soal accountability).
+- Simpen template revisi final di folder `KERJAAN KANTOR CABANG/HELPDESK SM & MANAGE SERVICE/Seat Management/`.
 
 ---
 
@@ -212,7 +288,6 @@ untuk melengkapi data dukung BAPP Nov 2025 – Mar 2026.
 
 - [ ] Email/WA Komersial: request 3 dokumen kontrak
 - [ ] Follow-up status SPK Seat Management & Helpdesk
-- [ ] Konfirmasi ke Bu Raisa: SOP billing yang aman vs strategi "main printer"
 - [ ] Susun SOP tagihan formal (untuk transparency)
 
 ---
@@ -269,6 +344,7 @@ Bisa di-improve via sistem Seat Management:
 | PIC Gapura — Makassar (UPG) | Madil | +62 811-4111-608 |
 | PIC Gapura — Padang (PDG) | Supernady Sutomo | +62 812-1268-6293 |
 | PIC Gapura — Batam | Ibu Jellita | +62 877-2218-4629 |
+| PIC Gapura — Project Driver Kantor Pusat (user) | Bu Wulan | +62 822-7268-7432 |
 | Team Leader Manage Service (Absensi & Hasil Report) | Gartian Fikry | +62 896-6237-0509 |
 | Co BM / Wakil BM | Rizky Akbar | +62 858-7877-1102 |
 
