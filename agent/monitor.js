@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js')
 const os = require('os')
 const { execSync } = require('child_process')
 
-const CURRENT_VERSION = '1.4.0'
+const CURRENT_VERSION = '1.5.0'
 const platform = os.platform() // 'win32' atau 'darwin'
 
 // Popup ditangani oleh popup-watcher.js (jalan di session user).
@@ -14,7 +14,7 @@ const platform = os.platform() // 'win32' atau 'darwin'
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
 
 const hostname = os.hostname()
-const INTERVAL_MS        = 60 * 1000           // ping tiap 1 menit
+const INTERVAL_MS        = 30 * 60 * 1000      // ping tiap 30 menit (hemat egress)
 const CHECK_UPDATE_MS    = 60 * 60 * 1000      // cek update tiap 1 jam
 const SPECS_REFRESH_MS   = 24 * 60 * 60 * 1000 // refresh specs tiap 1 hari
 const LOCATION_REFRESH_MS = 30 * 60 * 1000
