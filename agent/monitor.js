@@ -627,7 +627,7 @@ async function ping() {
       ...cachedHealth,
     })
     .eq('hostname', hostname)
-    .select()
+    .select('id')
 
   if (error) {
     console.error(`[${now.toLocaleTimeString()}] Gagal ping:`, error.message)
@@ -639,7 +639,7 @@ async function ping() {
         .from('laptops')
         .update({ hostname, last_seen: now.toISOString(), is_online: true, boot_time: bootTime, wifi_ssid: ssid, agent_version: CURRENT_VERSION, ram_used_gb, ram_usage_pct, ...cachedLocation, ...cachedSpecs, ...cachedHealth })
         .eq('serial_number', sn)
-        .select()
+        .select('id')
       if (snData && snData.length > 0) {
         if (!cachedLaptopId && snData[0]?.id) cachedLaptopId = snData[0].id
         console.log(`[${now.toLocaleTimeString()}] Matched by SN — hostname diupdate: ${hostname}`)
