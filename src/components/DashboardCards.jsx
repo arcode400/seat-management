@@ -8,7 +8,8 @@ import { getAllBAP } from '../services/beritaAcaraPengembalianService'
 import { supabase } from '../lib/supabase'
 import InfoTooltip from './InfoTooltip'
 
-const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
+// Harus > interval ping agent (30 menit) biar agent sehat gak kebaca offline
+const OFFLINE_THRESHOLD_MS = 40 * 60 * 1000
 
 function toUTC(ts) {
   if (!ts) return null
@@ -223,7 +224,7 @@ export default function DashboardCards() {
       <section>
         <SectionHeader
           title="Monitoring Jaringan"
-          info={'Online = laptop yang ping ke server < 3 menit terakhir, termasuk yang sedang dipinjam (in_use).\n\nOffline = sisanya.'}
+          info={'Online = laptop yang ping ke server < 40 menit terakhir, termasuk yang sedang dipinjam (in_use).\n\nOffline = sisanya.'}
         />
         <StatsGrid cols={3}>
           <StatCard label="Total Perangkat" value={stats.total}

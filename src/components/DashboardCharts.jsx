@@ -11,7 +11,8 @@ import { getActivityLast7Days } from '../services/transactionService'
 import { supabase } from '../lib/supabase'
 import InfoTooltip from './InfoTooltip'
 
-const OFFLINE_THRESHOLD_MS = 3 * 60 * 1000
+// Harus > interval ping agent (30 menit) biar agent sehat gak kebaca offline
+const OFFLINE_THRESHOLD_MS = 40 * 60 * 1000
 
 function toUTC(ts) {
   if (!ts) return null
@@ -152,7 +153,7 @@ export default function DashboardCharts() {
           subtitle="Distribusi status saat ini"
           info={
             'In Use = laptop yang sedang dipinjam, terlepas online/offline.\n' +
-            'Online = laptop tersedia & aktif ping < 3 menit.\n' +
+            'Online = laptop tersedia & aktif ping < 40 menit.\n' +
             'Offline = sisanya.'
           }
           delay={0}

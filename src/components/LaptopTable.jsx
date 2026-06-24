@@ -5,7 +5,8 @@ import { getAllLaptops } from '../services/laptopService'
 import { getActiveBorrows } from '../services/transactionService'
 import usePolling from '../hooks/usePolling'
 
-const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000
+// Harus > interval ping agent (30 menit) biar agent sehat gak kebaca offline
+const OFFLINE_THRESHOLD_MS = 40 * 60 * 1000
 const OFFICE_WIFI = import.meta.env.VITE_OFFICE_WIFI
 const OFFICE_IPS = (import.meta.env.VITE_OFFICE_IP ?? '')
   .split(',').map(s => s.trim()).filter(Boolean)
